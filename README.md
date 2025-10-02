@@ -14,7 +14,7 @@ This plugin extends NetBox to manage and relate business services to network res
 - Create new services and relate them to network resources.
 - Use the detail view to see all associations for a service.
 
-![alt text](02-main.png)
+![alt text](https://github.com/baldoarturo/netbox-services/raw/master/02-main.png)
 
 ## Why
 Because you might be looking for such a thing. 
