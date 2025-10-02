@@ -1,0 +1,123 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+{% load helpers %}
+{% load buttons %}
+
+{% block content %}
+<div class="row">
+  <div class="col col-12 col-xl-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "General" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <td style="width: 30%">{% trans "Service ID" %}</td>
+          <td>{{ object | linkify }}</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Type" %}</td>
+          <td>{{ object.get_type_display }}</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Tenant" %}</td>
+          <td>{{ object.tenant | linkify }}</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Tags" %}</td>
+          <td>{% for tag in object.tags.all %}{{ tag  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col col-12 col-xl-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Devices & Interfaces" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <td style="width: 30%">{% trans "Devices" %}</td>
+          <td>{% for device in object.devices.all %}{{ device | linkify }}</br>{% if not forloop.last %} {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Interfaces" %}</td>
+          <td>{% for iface in object.interfaces.all %}{{ iface  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Cables" %}</td>
+          <td>{% for cable in object.cables.all %}{{ cable  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col col-12 col-xl-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Network" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <td style="width: 30%">{% trans "VLANs" %}</td>
+          <td>{% for vlan in object.vlans.all %}{{ vlan  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Prefixes" %}</td>
+          <td>{% for prefix in object.prefixes.all %}{{ prefix  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "ASNs" %}</td>
+          <td>{% for asn in object.asns.all %}{{ asn  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col col-12 col-xl-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "VPNs" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <td style="width: 30%">{% trans "VRFs" %}</td>
+          <td>{% for vrf in object.vrf.all %}{{ vrf  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "RTs" %}</td>
+          <td>{% for rt in object.route_targets.all %}{{ rt  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "L2VPNs" %}</td>
+          <td>{% for l2vpn in object.l2vpns.all %}{{ l2vpn  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+        <tr>
+          <td style="width: 30%">{% trans "Tunnels" %}</td>
+          <td>{% for tunnel in object.tunnels.all %}{{ tunnel  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col col-12 col-xl-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Virtualization" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <td style="width: 30%">{% trans "VMs" %}</td>
+          <td>{% for vm in object.virtual_machines.all %}{{ vm  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 10%"><a href="{% url "plugins:netbox_services:relate_devices" pk=object.pk %}">Manage</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

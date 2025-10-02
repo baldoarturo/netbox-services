@@ -1,0 +1,41 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-services"
+version = "0.0.1"
+description = "A NetBox services Plugin for Service Providers"
+requires-python = ">=3.10"
+
+authors = [
+    {name = "Arturo Baldo", email = "baldoarturo@gmail.com"}
+]
+maintainers = [
+    {name = "Arturo Baldo", email = "baldoarturo@gmail.com"},
+]
+
+readme = "README.md"
+keywords = ["netbox-plugin", ]
+
+license = {file = "LICENSE.md"}
+classifiers=[
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'Natural Language :: English',
+    "Programming Language :: Python :: 3 :: Only",
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+]
+
+[project.urls]
+Documentation = "https://github.com/baldoarturo/netbox-services/blob/main/README.md"
+Source = "https://github.com/baldoarturo/netbox-services"
+Tracker = "https://github.com/baldoarturo/netbox-services/issues"
+
+[tool.setuptools.packages.find]
+exclude=["netbox_services.tests"]
