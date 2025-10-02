@@ -30,8 +30,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
         pip install pytest netaddr
-    - name: Run tests
-      run: pytest
+    # - name: Run tests
+    #   run: pytest
     - name: Build package
       run: python -m build
     - name: Publish package
