@@ -26,10 +26,19 @@ class ServiceRelatedDevicesForm(forms.ModelForm):
         fields = ('devices',)
 
 class ServiceRelatedInterfacesForm(forms.ModelForm):
-
     class Meta:
         model = Service
-        fields = ('interfaces',)
+        fields = ['interfaces']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        related_devices = self.instance.devices.all()
+        if related_devices.exists():
+            self.fields['interfaces'].queryset = Interface.objects.filter(device__in=related_devices)
+        else:
+            self.fields['interfaces'].queryset = Interface.objects.none()
+        # Show device name in the interface choices
+        self.fields['interfaces'].label_from_instance = lambda obj: f"{obj} ({obj.device})"
 
 class ServiceRelatedCablesForm(forms.ModelForm):
 
