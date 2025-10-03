@@ -17,6 +17,9 @@ from .forms import (
     ServiceRelatedTunnelsForm,
     ServiceRelatedVirtualMachinesForm
 )
+from .forms import ServiceFilterSetForm
+
+from .filtersets import ServiceFilterSet
 
 #
 #   GENERIC VIEWS
@@ -28,13 +31,13 @@ class ServiceView(ObjectView):
     queryset = Service.objects.all()
     template_name = 'netbox_services/service.html'
 
-
 @register_model_view(Service, name='list', path='', detail=False)
 class ServiceListView(ObjectListView):
     queryset = Service.objects.all()
     table = ServiceListTable
     template_name = 'generic/object_list.html'
-
+    filterset = ServiceFilterSet
+    filterset_form = ServiceFilterSetForm
 
 @register_model_view(Service, name='add', path='add', detail=False)
 class ServiceAddView(ObjectEditView):
@@ -51,6 +54,14 @@ class ServiceEditView(ObjectEditView):
 @register_model_view(Service, name='delete', detail=True)
 class ServiceDeleteView(ObjectDeleteView):
     queryset = Service.objects.all()
+
+#
+#   TREE VIEWS
+#
+@register_model_view(Service, name='tree', detail=True)
+class ServiceTreeView(ObjectView):
+    queryset = Service.objects.all()
+    template_name = 'netbox_services/tree.html'
 
 #
 #   RELATION VIEWS

@@ -9,6 +9,7 @@ from dcim.models import Device, Interface, Cable
 from ipam.models import VRF, Prefix, VLAN, ASN, RouteTarget
 from vpn.models import L2VPN, Tunnel
 from virtualization.models import VirtualMachine
+from utilities.forms.rendering import FieldSet
 
 
 class NewServiceForm(NetBoxModelForm):
@@ -19,11 +20,20 @@ class NewServiceForm(NetBoxModelForm):
         fields = ('type', 'service_id', 'tenant')
 
 
+class ServiceFilterSetForm(NetBoxModelFilterSetForm):
+    model = Service
+    tenant = forms.ModelChoiceField(
+        queryset=Tenant.objects.filter(service__isnull=False).distinct(),
+        required=False
+    )
+
+
 class ServiceRelatedDevicesForm(forms.ModelForm):
 
     class Meta:
         model = Service
         fields = ('devices',)
+
 
 class ServiceRelatedInterfacesForm(forms.ModelForm):
     class Meta:
@@ -34,11 +44,13 @@ class ServiceRelatedInterfacesForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         related_devices = self.instance.devices.all()
         if related_devices.exists():
-            self.fields['interfaces'].queryset = Interface.objects.filter(device__in=related_devices)
+            self.fields['interfaces'].queryset = Interface.objects.filter(
+                device__in=related_devices)
         else:
             self.fields['interfaces'].queryset = Interface.objects.none()
         # Show device name in the interface choices
         self.fields['interfaces'].label_from_instance = lambda obj: f"{obj} ({obj.device})"
+
 
 class ServiceRelatedCablesForm(forms.ModelForm):
 
@@ -53,17 +65,20 @@ class ServiceRelatedVLANsForm(forms.ModelForm):
         model = Service
         fields = ('vlans',)
 
+
 class ServiceRelatedPrefixesForm(forms.ModelForm):
 
     class Meta:
         model = Service
         fields = ('prefixes',)
 
+
 class ServiceRelatedVRFsForm(forms.ModelForm):
 
     class Meta:
         model = Service
         fields = ('vrfs',)
+
 
 class ServiceRelatedASNsForm(forms.ModelForm):
 
@@ -78,17 +93,20 @@ class ServiceRelatedRouteTargetsForm(forms.ModelForm):
         model = Service
         fields = ('route_targets',)
 
+
 class ServiceRelatedL2VPNsForm(forms.ModelForm):
 
     class Meta:
         model = Service
         fields = ('l2vpns',)
 
+
 class ServiceRelatedTunnelsForm(forms.ModelForm):
 
     class Meta:
         model = Service
         fields = ('tunnels',)
+
 
 class ServiceRelatedVirtualMachinesForm(forms.ModelForm):
 
