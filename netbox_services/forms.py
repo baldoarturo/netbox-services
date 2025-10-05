@@ -2,14 +2,15 @@ from django import forms
 from utilities.forms.fields import CommentField
 
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
-from .models import Service, ServiceTypeChoices
 
 from tenancy.models import Tenant
 from dcim.models import Device, Interface, Cable
 from ipam.models import VRF, Prefix, VLAN, ASN, RouteTarget
 from vpn.models import L2VPN, Tunnel
 from virtualization.models import VirtualMachine
-from utilities.forms.rendering import FieldSet
+
+
+from .models import Service, ServiceTypeChoices
 
 
 class NewServiceForm(NetBoxModelForm):
@@ -17,7 +18,7 @@ class NewServiceForm(NetBoxModelForm):
 
     class Meta:
         model = Service
-        fields = ('type', 'service_id', 'tenant')
+        fields = ('type', 'service_id', 'tenant', 'status')
 
 
 class ServiceFilterSetForm(NetBoxModelFilterSetForm):

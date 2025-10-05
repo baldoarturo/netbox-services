@@ -1,5 +1,4 @@
 from django.db import models
-from django.urls import reverse
 
 from netbox.models import NetBoxModel
 
@@ -8,6 +7,7 @@ from dcim.models import Device, Interface, Cable
 from ipam.models import VRF, Prefix, VLAN, ASN, RouteTarget
 from vpn.models import L2VPN, Tunnel
 from virtualization.models import VirtualMachine
+from circuits.choices import CircuitStatusChoices
 
 from utilities.choices import ChoiceSet
 from taggit.managers import TaggableManager
@@ -36,6 +36,12 @@ class Service(NetBoxModel):
         unique=True,
         null=False,
         blank=False
+    )
+    status = models.CharField(
+        choices=CircuitStatusChoices,
+        verbose_name='Status',
+        null=True,
+        blank=True
     )
     tenant = models.ForeignKey(
         Tenant,
@@ -103,3 +109,6 @@ class Service(NetBoxModel):
 
     def get_absolute_url(self):
         return f"/plugins/services/{self.pk}/"
+
+    def get_status_color(self):
+        return CircuitStatusChoices.colors.get(self.status)
