@@ -2,7 +2,6 @@ from importlib.metadata import metadata
 
 from netbox.plugins import PluginConfig
 
-
 plugin = metadata('netbox_services')
 
 
@@ -15,5 +14,6 @@ class Services(PluginConfig):
     author_email = 'baldoarturo@gmail.com'
     base_url = 'services'
     min_version = '4.4.0'
+
 
 config = Services
