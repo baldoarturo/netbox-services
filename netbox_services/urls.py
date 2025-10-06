@@ -1,11 +1,6 @@
 from django.urls import path, include
 from utilities.urls import get_model_urls
 from .views import (
-    ServiceView,
-    ServiceListView,
-    ServiceAddView,
-    ServiceEditView,
-    ServiceDeleteView,
     ServiceRelatedDevicesView,
     ServiceRelatedInterfacesView,
     ServiceRelatedCablesView,
