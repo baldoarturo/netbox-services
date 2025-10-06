@@ -1,3 +1,5 @@
+from taggit.managers import TaggableManager
+
 from django.db import models
 
 from netbox.models import NetBoxModel
@@ -10,7 +12,6 @@ from virtualization.models import VirtualMachine
 from circuits.choices import CircuitStatusChoices
 
 from utilities.choices import ChoiceSet
-from taggit.managers import TaggableManager
 
 
 class ServiceTypeChoices(ChoiceSet):
