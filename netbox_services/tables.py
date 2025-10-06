@@ -22,7 +22,6 @@ class ServiceTable(NetBoxTable):
     service_id = tables.Column(
         linkify=True,
         verbose_name='Service ID',
-
     )
 
     class Meta(NetBoxTable.Meta):
