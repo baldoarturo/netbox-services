@@ -165,7 +165,7 @@ class ServiceFilterForm(NetBoxModelFilterSetForm):
         required=False
     )
     tunnels = forms.ModelMultipleChoiceField(
-        queryset=Tenant.objects.all(),
+        queryset=Tunnel.objects.all(),
         required=False
     )
     virtual_machines = forms.ModelMultipleChoiceField(
