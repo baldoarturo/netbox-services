@@ -11,10 +11,6 @@ version = "0.0.6"
 description = "A NetBox services Plugin for Service Providers"
 requires-python = ">=3.10"
 
-dependencies = [
-    "django-formtools == 2.4.1",
-]
-
 authors = [
     {name = "Arturo Baldo", email = "baldoarturo@gmail.com"}
 ]
