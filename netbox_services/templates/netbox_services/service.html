@@ -103,7 +103,7 @@
       <table class="table table-hover attr-table">
         <tr>
           <td style="width: 20%">{% trans "VRFs" %}</td>
-          <td style="width: 40%">{% for vrf in object.vrf.all %}{{ vrf  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
+          <td style="width: 40%">{% for vrf in object.vrfs.all %}{{ vrf  | linkify }}</br>{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td>
           <td style="width: 40%"><a href="{% url "plugins:netbox_services:relate_vrfs" pk=object.pk %}">Assign</td>
         </tr>
         <tr>
