@@ -16,7 +16,7 @@ class NewServiceForm(NetBoxModelForm):
 
     class Meta:
         model = Service
-        fields = ('type', 'service_id', 'tenant')
+        fields = ('type', 'service_id', 'status', 'tenant')
 
 
 class ServiceFilterSetForm(NetBoxModelFilterSetForm):
