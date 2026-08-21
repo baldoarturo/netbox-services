@@ -1,41 +1,81 @@
-# This workflow will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# Bump the patch version on each push, build, publish to PyPI, then commit
+# the new version. The bump commit uses [skip ci] so this workflow does not
+# loop.
 
 name: Upload Python Package
 
 on:
   push:
+    branches:
+      - main
+      - master
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
+
+    - name: Bump patch version
+      id: bump
+      run: |
+        python <<'PY'
+        import os
+        import re
+        from pathlib import Path
+
+        path = Path('pyproject.toml')
+        text = path.read_text(encoding='utf-8')
+        match = re.search(r'^version = "(\d+)\.(\d+)\.(\d+)"', text, re.M)
+        if not match:
+            raise SystemExit('Could not find version = "X.Y.Z" in pyproject.toml')
+        major, minor, patch = (int(part) for part in match.groups())
+        new_version = f'{major}.{minor}.{patch + 1}'
+        text, count = re.subn(
+            r'^version = "\d+\.\d+\.\d+"',
+            f'version = "{new_version}"',
+            text,
+            count=1,
+            flags=re.M,
+        )
+        if count != 1:
+            raise SystemExit('Failed to update version in pyproject.toml')
+        path.write_text(text, encoding='utf-8')
+        print(f'Bumped version to {new_version}')
+        with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+            fh.write(f'version={new_version}\n')
+        PY
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build
-        pip install pytest netaddr
-    # - name: Run tests
-    #   run: pytest
+
     - name: Build package
       run: python -m build
+
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+
+    - name: Commit version bump
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add pyproject.toml
+        git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+        git push
