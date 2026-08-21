@@ -52,6 +52,7 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
     status = models.CharField(
         choices=CircuitStatusChoices,
         verbose_name='Status',
+        default=CircuitStatusChoices.STATUS_PLANNED,
         null=True,
         blank=True
     )
