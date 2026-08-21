@@ -4,10 +4,7 @@ from utilities.forms.widgets import DatePicker
 
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
 from tenancy.models import Tenant
-from dcim.models import Device, Interface, Cable
-from ipam.models import VRF, Prefix, VLAN, ASN, RouteTarget
-from vpn.models import L2VPN, Tunnel
-from virtualization.models import VirtualMachine
+from dcim.models import Interface
 
 from .models import Service, ServiceAttachment, ServiceTypeChoices
 
@@ -44,9 +41,17 @@ class NewServiceForm(NetBoxModelForm):
 
 class ServiceFilterSetForm(NetBoxModelFilterSetForm):
     model = Service
-    tenant = forms.ModelChoiceField(
-        queryset=Tenant.objects.filter(service__isnull=False).distinct(),
+    type = forms.MultipleChoiceField(
+        choices=ServiceTypeChoices,
         required=False
+    )
+    service_id = forms.CharField(
+        required=False
+    )
+    tenant_id = forms.ModelMultipleChoiceField(
+        queryset=Tenant.objects.filter(service__isnull=False).distinct(),
+        required=False,
+        label='Tenant'
     )
 
 
@@ -135,66 +140,6 @@ class ServiceRelatedVirtualMachinesForm(forms.ModelForm):
     class Meta:
         model = Service
         fields = ('virtual_machines',)
-
-
-class ServiceFilterForm(NetBoxModelFilterSetForm):
-    comments = CommentField()
-    model = Service
-    type = forms.MultipleChoiceField(
-        choices=ServiceTypeChoices,
-        required=False
-    )
-    service_id = forms.CharField(
-        required=False
-    )
-    tenant = forms.ModelMultipleChoiceField(
-        queryset=Tenant.objects.all(),
-        required=False
-    )
-    devices = forms.ModelMultipleChoiceField(
-        queryset=Device.objects.all(),
-        required=False
-    )
-    interfaces = forms.ModelMultipleChoiceField(
-        queryset=Interface.objects.all(),
-        required=False
-    )
-    cables = forms.ModelMultipleChoiceField(
-        queryset=Cable.objects.all(),
-        required=False
-    )
-    vlans = forms.ModelMultipleChoiceField(
-        queryset=VLAN.objects.all(),
-        required=False
-    )
-    prefixes = forms.ModelMultipleChoiceField(
-        queryset=Prefix.objects.all(),
-        required=False
-    )
-    vrf = forms.ModelMultipleChoiceField(
-        queryset=VRF.objects.all(),
-        required=False
-    )
-    asns = forms.ModelMultipleChoiceField(
-        queryset=ASN.objects.all(),
-        required=False
-    )
-    route_targets = forms.ModelMultipleChoiceField(
-        queryset=RouteTarget.objects.all(),
-        required=False
-    )
-    l2vpns = forms.ModelMultipleChoiceField(
-        queryset=L2VPN.objects.all(),
-        required=False
-    )
-    tunnels = forms.ModelMultipleChoiceField(
-        queryset=Tunnel.objects.all(),
-        required=False
-    )
-    virtual_machines = forms.ModelMultipleChoiceField(
-        queryset=VirtualMachine.objects.all(),
-        required=False
-    )
 
 
 class ServiceAttachmentForm(forms.ModelForm):
