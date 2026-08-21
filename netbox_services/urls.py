@@ -1,6 +1,8 @@
 from django.urls import path, include
 from utilities.urls import get_model_urls
 from .views import (
+    ServiceAttachmentDeleteView,
+    ServiceAttachmentEditView,
     ServiceRelatedDevicesView,
     ServiceRelatedInterfacesView,
     ServiceRelatedCablesView,
@@ -20,6 +22,14 @@ urlpatterns = [
          ),
     path('<int:pk>/',
          include(get_model_urls('netbox_services', 'service', detail=True))
+         ),
+    path('<int:pk>/attachments/add/',
+         ServiceAttachmentEditView.as_view(),
+         name='service_attachment_add',
+         ),
+    path('<int:pk>/attachments/<int:attachment_pk>/delete/',
+         ServiceAttachmentDeleteView.as_view(),
+         name='service_attachment_delete',
          ),
     path('<int:pk>/relate/devices/',
          ServiceRelatedDevicesView.as_view(),

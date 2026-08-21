@@ -8,7 +8,18 @@ class ServiceFilterSet(NetBoxModelFilterSet):
 
     class Meta:
         model = Service
-        fields = ('tenant', 'description')
+        fields = (
+            'tenant',
+            'description',
+            'status',
+            'order_date',
+            'planned_activation',
+            'installed',
+            'contract_start',
+            'contract_end',
+            'requested_disconnect',
+            'decommissioned',
+        )
 
     def search(self, queryset, name, value):
         return queryset.filter(

@@ -1,5 +1,6 @@
 from django import forms
 from utilities.forms.fields import CommentField
+from utilities.forms.widgets import DatePicker
 
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
 from tenancy.models import Tenant
@@ -8,7 +9,7 @@ from ipam.models import VRF, Prefix, VLAN, ASN, RouteTarget
 from vpn.models import L2VPN, Tunnel
 from virtualization.models import VirtualMachine
 
-from .models import Service, ServiceTypeChoices
+from .models import Service, ServiceAttachment, ServiceTypeChoices
 
 
 class NewServiceForm(NetBoxModelForm):
@@ -16,7 +17,29 @@ class NewServiceForm(NetBoxModelForm):
 
     class Meta:
         model = Service
-        fields = ('type', 'service_id', 'description', 'status', 'tenant')
+        fields = (
+            'type',
+            'service_id',
+            'description',
+            'status',
+            'tenant',
+            'order_date',
+            'planned_activation',
+            'installed',
+            'contract_start',
+            'contract_end',
+            'requested_disconnect',
+            'decommissioned',
+        )
+        widgets = {
+            'order_date': DatePicker(),
+            'planned_activation': DatePicker(),
+            'installed': DatePicker(),
+            'contract_start': DatePicker(),
+            'contract_end': DatePicker(),
+            'requested_disconnect': DatePicker(),
+            'decommissioned': DatePicker(),
+        }
 
 
 class ServiceFilterSetForm(NetBoxModelFilterSetForm):
@@ -172,3 +195,10 @@ class ServiceFilterForm(NetBoxModelFilterSetForm):
         queryset=VirtualMachine.objects.all(),
         required=False
     )
+
+
+class ServiceAttachmentForm(forms.ModelForm):
+
+    class Meta:
+        model = ServiceAttachment
+        fields = ('name', 'file', 'description')

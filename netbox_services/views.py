@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+
 from utilities.views import register_model_view
 from netbox.views.generic import (
     ObjectView,
@@ -7,9 +9,9 @@ from netbox.views.generic import (
     BulkDeleteView,
 )
 
-from .models import Service
+from .models import Service, ServiceAttachment
 from .tables import ServiceListTable
-from .forms import NewServiceForm
+from .forms import NewServiceForm, ServiceAttachmentForm
 from .forms import (
     ServiceRelatedDevicesForm,
     ServiceRelatedInterfacesForm,
@@ -34,7 +36,7 @@ from .filtersets import ServiceFilterSet
 
 @register_model_view(Service, name='view', path='', detail=True)
 class ServiceView(ObjectView):
-    queryset = Service.objects.all()
+    queryset = Service.objects.prefetch_related('attachments', 'images', 'tags')
     template_name = 'netbox_services/service.html'
 
 @register_model_view(Service, name='list', path='', detail=False)
@@ -67,6 +69,28 @@ class ServiceBulkDeleteView(BulkDeleteView):
     queryset = Service.objects.all()
     filterset = ServiceFilterSet
     table = ServiceListTable
+
+
+class ServiceAttachmentEditView(ObjectEditView):
+    queryset = ServiceAttachment.objects.all()
+    form = ServiceAttachmentForm
+
+    def alter_object(self, obj, request, url_args, url_kwargs):
+        if not obj.pk:
+            obj.service = get_object_or_404(Service, pk=url_kwargs.get('pk'))
+        return obj
+
+    def get_object(self, **kwargs):
+        if attachment_pk := kwargs.get('attachment_pk'):
+            return get_object_or_404(self.queryset, pk=attachment_pk)
+        return self.queryset.model()
+
+
+class ServiceAttachmentDeleteView(ObjectDeleteView):
+    queryset = ServiceAttachment.objects.all()
+
+    def get_object(self, **kwargs):
+        return get_object_or_404(self.queryset, pk=kwargs.get('attachment_pk'))
 
 #
 #   TREE VIEWS
