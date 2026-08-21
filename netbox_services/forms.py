@@ -55,11 +55,29 @@ class ServiceFilterSetForm(NetBoxModelFilterSetForm):
     )
 
 
-class ServiceRelatedDevicesForm(forms.ModelForm):
+def related_objects_form(field_name):
+    """
+    Build a single-field ModelForm for assigning one of Service's related-object
+    M2M fields (devices, cables, vlans, etc). Avoids ~10 near-identical ModelForm
+    subclasses that differ only in which field they expose.
+    """
+    return type(
+        f'ServiceRelated{field_name.title().replace("_", "")}Form',
+        (forms.ModelForm,),
+        {'Meta': type('Meta', (), {'model': Service, 'fields': (field_name,)})}
+    )
 
-    class Meta:
-        model = Service
-        fields = ('devices',)
+
+ServiceRelatedDevicesForm = related_objects_form('devices')
+ServiceRelatedCablesForm = related_objects_form('cables')
+ServiceRelatedVLANsForm = related_objects_form('vlans')
+ServiceRelatedPrefixesForm = related_objects_form('prefixes')
+ServiceRelatedVRFsForm = related_objects_form('vrfs')
+ServiceRelatedASNsForm = related_objects_form('asns')
+ServiceRelatedRouteTargetsForm = related_objects_form('route_targets')
+ServiceRelatedL2VPNsForm = related_objects_form('l2vpns')
+ServiceRelatedTunnelsForm = related_objects_form('tunnels')
+ServiceRelatedVirtualMachinesForm = related_objects_form('virtual_machines')
 
 
 class ServiceRelatedInterfacesForm(forms.ModelForm):
@@ -77,69 +95,6 @@ class ServiceRelatedInterfacesForm(forms.ModelForm):
             self.fields['interfaces'].queryset = Interface.objects.none()
         # Show device name in the interface choices
         self.fields['interfaces'].label_from_instance = lambda obj: f"{obj} ({obj.device})"
-
-
-class ServiceRelatedCablesForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('cables',)
-
-
-class ServiceRelatedVLANsForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('vlans',)
-
-
-class ServiceRelatedPrefixesForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('prefixes',)
-
-
-class ServiceRelatedVRFsForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('vrfs',)
-
-
-class ServiceRelatedASNsForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('asns',)
-
-
-class ServiceRelatedRouteTargetsForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('route_targets',)
-
-
-class ServiceRelatedL2VPNsForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('l2vpns',)
-
-
-class ServiceRelatedTunnelsForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('tunnels',)
-
-
-class ServiceRelatedVirtualMachinesForm(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = ('virtual_machines',)
 
 
 class ServiceAttachmentForm(forms.ModelForm):

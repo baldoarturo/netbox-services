@@ -11,21 +11,7 @@ from netbox.views.generic import (
 
 from .models import Service, ServiceAttachment
 from .tables import ServiceListTable
-from .forms import NewServiceForm, ServiceAttachmentForm
-from .forms import (
-    ServiceRelatedDevicesForm,
-    ServiceRelatedInterfacesForm,
-    ServiceRelatedCablesForm,
-    ServiceRelatedVLANsForm,
-    ServiceRelatedPrefixesForm,
-    ServiceRelatedVRFsForm,
-    ServiceRelatedASNsForm,
-    ServiceRelatedRouteTargetsForm,
-    ServiceRelatedL2VPNsForm,
-    ServiceRelatedTunnelsForm,
-    ServiceRelatedVirtualMachinesForm
-)
-from .forms import ServiceFilterSetForm
+from .forms import NewServiceForm, ServiceAttachmentForm, ServiceFilterSetForm
 
 from .filtersets import ServiceFilterSet
 
@@ -105,56 +91,11 @@ class ServiceTreeView(ObjectView):
 #
 
 
-class ServiceRelatedDevicesView(ObjectEditView):
+class ServiceRelatedObjectsView(ObjectEditView):
+    """
+    Generic edit view for assigning one of Service's related-object M2M fields.
+    The form to use (and therefore which field is being edited) is supplied
+    per-URL via `.as_view(form=...)` in urls.py, avoiding ~10 near-identical
+    subclasses that differed only in which form they used.
+    """
     queryset = Service.objects.all()
-    form = ServiceRelatedDevicesForm
-
-
-class ServiceRelatedInterfacesView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedInterfacesForm
-
-
-class ServiceRelatedCablesView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedCablesForm
-
-
-class ServiceRelatedVLANsView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedVLANsForm
-
-
-class ServiceRelatedPrefixesView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedPrefixesForm
-
-
-class ServiceRelatedVRFsView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedVRFsForm
-
-
-class ServiceRelatedASNsView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedASNsForm
-
-
-class ServiceRelatedRouteTargetsView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedRouteTargetsForm
-
-
-class ServiceRelatedL2VPNsView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedL2VPNsForm
-
-
-class ServiceRelatedTunnelsView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedTunnelsForm
-
-
-class ServiceRelatedVirtualMachinesView(ObjectEditView):
-    queryset = Service.objects.all()
-    form = ServiceRelatedVirtualMachinesForm
