@@ -10,11 +10,14 @@ class ServiceSerializer(NetBoxModelSerializer):
     )
     class Meta:
         model = Service
-        fields = ('type',
-                  'service_id',
-                  'tenant',
-                  'tags',
-                  'custom_fields',
-                  'created',
-                  'last_updated',
-                  )
+        fields = (
+            'id',
+            'url',
+            'type',
+            'service_id',
+            'tenant',
+            'tags',
+            'custom_fields',
+            'created',
+            'last_updated',
+        )
