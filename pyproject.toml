@@ -7,11 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-services"
-<<<<<<< HEAD
-version = "0.0.14"
-=======
 version = "0.0.15"
->>>>>>> 3cea007 (chore: bump version to 0.0.15)
 description = "A NetBox services Plugin for Service Providers"
 requires-python = ">=3.10"
 
