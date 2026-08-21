@@ -1,11 +1,13 @@
 import django_tables2 as tables
 
 from netbox.tables import NetBoxTable
+from netbox.tables.columns import ToggleColumn
 
 from .models import Service
 
 
 class ServiceListTable(NetBoxTable):
+    pk = ToggleColumn(accessor='pk')
     service_id = tables.Column(
         linkify=True,
         verbose_name='Service ID',

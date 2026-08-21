@@ -1,5 +1,11 @@
 from utilities.views import register_model_view
-from netbox.views.generic import ObjectView, ObjectDeleteView, ObjectEditView, ObjectListView
+from netbox.views.generic import (
+    ObjectView,
+    ObjectDeleteView,
+    ObjectEditView,
+    ObjectListView,
+    BulkDeleteView,
+)
 
 from .models import Service
 from .tables import ServiceListTable
@@ -54,6 +60,13 @@ class ServiceEditView(ObjectEditView):
 @register_model_view(Service, name='delete', detail=True)
 class ServiceDeleteView(ObjectDeleteView):
     queryset = Service.objects.all()
+
+
+@register_model_view(Service, name='bulk_delete', path='delete', detail=False)
+class ServiceBulkDeleteView(BulkDeleteView):
+    queryset = Service.objects.all()
+    filterset = ServiceFilterSet
+    table = ServiceListTable
 
 #
 #   TREE VIEWS
