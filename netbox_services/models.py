@@ -53,7 +53,6 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
         choices=CircuitStatusChoices,
         verbose_name='Status',
         default=CircuitStatusChoices.STATUS_PLANNED,
-        null=True,
         blank=True
     )
     tenant = models.ForeignKey(
