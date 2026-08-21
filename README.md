@@ -1,5 +1,8 @@
 # NetBox Services Plugin
 
+[![Upload Python Package](https://github.com/baldoarturo/netbox-services/actions/workflows/python-publish.yml/badge.svg)](https://github.com/baldoarturo/netbox-services/actions/workflows/python-publish.yml)
+[![PyPI version](https://img.shields.io/pypi/v/netbox-services.svg)](https://pypi.org/project/netbox-services/)
+
 A NetBox plugin for **service providers** who need a service-centric inventory on top of DCIM/IPAM.
 
 NetBox already models devices, prefixes, circuits, and VRFs. What it does not model natively is the **commercial / operational service** that those objects deliver — the Cogent DIA circuit `NW-123456`, the customer L3VPN, the IP transit handoff.
