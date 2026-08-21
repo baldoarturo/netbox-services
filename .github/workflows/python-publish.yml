@@ -1,61 +1,47 @@
-# Bump the patch version on each push, build, publish to PyPI, then commit
-# the new version. The bump commit uses [skip ci] so this workflow does not
-# loop.
+# Publish to PyPI when a version tag (e.g. v0.0.13) is pushed. Bump the
+# version in pyproject.toml yourself, commit it, then push a matching tag
+# to cut a release - nothing publishes automatically on ordinary pushes.
 
 name: Upload Python Package
 
 on:
   push:
-    branches:
-      - main
-      - master
+    tags:
+      - 'v*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        persist-credentials: true
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
-    - name: Bump patch version
-      id: bump
+    - name: Verify tag matches pyproject.toml version
       run: |
         python <<'PY'
         import os
         import re
+        import sys
         from pathlib import Path
 
-        path = Path('pyproject.toml')
-        text = path.read_text(encoding='utf-8')
-        match = re.search(r'^version = "(\d+)\.(\d+)\.(\d+)"', text, re.M)
+        tag_version = os.environ['GITHUB_REF_NAME'].removeprefix('v')
+        text = Path('pyproject.toml').read_text(encoding='utf-8')
+        match = re.search(r'^version = "(\d+\.\d+\.\d+)"', text, re.M)
         if not match:
-            raise SystemExit('Could not find version = "X.Y.Z" in pyproject.toml')
-        major, minor, patch = (int(part) for part in match.groups())
-        new_version = f'{major}.{minor}.{patch + 1}'
-        text, count = re.subn(
-            r'^version = "\d+\.\d+\.\d+"',
-            f'version = "{new_version}"',
-            text,
-            count=1,
-            flags=re.M,
-        )
-        if count != 1:
-            raise SystemExit('Failed to update version in pyproject.toml')
-        path.write_text(text, encoding='utf-8')
-        print(f'Bumped version to {new_version}')
-        with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
-            fh.write(f'version={new_version}\n')
+            sys.exit('Could not find version = "X.Y.Z" in pyproject.toml')
+        pyproject_version = match.group(1)
+        if tag_version != pyproject_version:
+            sys.exit(
+                f'Tag v{tag_version} does not match pyproject.toml version {pyproject_version}'
+            )
         PY
 
     - name: Install dependencies
@@ -71,11 +57,3 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
-
-    - name: Commit version bump
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add pyproject.toml
-        git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
-        git push
