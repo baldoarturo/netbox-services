@@ -18,3 +18,7 @@
 ## Edit scope
 
 - Prefer changes scoped to `netbox_services/`; avoid touching core NetBox unless explicitly asked.
+
+## Auth for manual testing
+
+- Use `admin` / `admin` when logging in to check something manually in the browser.
