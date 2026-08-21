@@ -38,6 +38,11 @@ class Service(NetBoxModel):
         null=False,
         blank=False
     )
+    description = models.CharField(
+        verbose_name='Description',
+        max_length=200,
+        blank=True
+    )
     status = models.CharField(
         choices=CircuitStatusChoices,
         verbose_name='Status',

@@ -18,6 +18,10 @@
           <td>{{ object.get_type_display }}</td>
         </tr>
         <tr>
+          <td style="width: 20%">{% trans "Description" %}</td>
+          <td>{{ object.description|placeholder }}</td>
+        </tr>
+        <tr>
           <td style="width: 20%">{% trans "Tenant" %}</td>
           <td>{{ object.tenant | linkify }}</td>
         </tr>

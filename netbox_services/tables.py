@@ -16,8 +16,8 @@ class ServiceListTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = Service
-        fields = ('pk', 'service_id', 'type', 'tenant')
-        default_columns = ('pk', 'service_id', 'type', 'tenant')
+        fields = ('pk', 'service_id', 'type', 'description', 'tenant')
+        default_columns = ('pk', 'service_id', 'type', 'description', 'tenant')
 
 
 class ServiceTable(NetBoxTable):
@@ -31,6 +31,7 @@ class ServiceTable(NetBoxTable):
         fields = (
             'type',
             'service_id',
+            'description',
             'tenant',
             'devices',
             'interfaces',

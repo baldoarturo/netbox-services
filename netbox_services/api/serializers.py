@@ -15,6 +15,7 @@ class ServiceSerializer(NetBoxModelSerializer):
             'url',
             'type',
             'service_id',
+            'description',
             'tenant',
             'tags',
             'custom_fields',
