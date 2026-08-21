@@ -1,57 +1,91 @@
 # NetBox Services Plugin
 
-This plugin extends NetBox to manage and relate business services to network resources. It introduces a `Service` model that allows you to track various service types (such as L2VPN, L3VPN, DIA, Transit, CDN, Voice) and associate them with devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, and virtual machines.
+A NetBox plugin for **service providers** who need a service-centric inventory on top of DCIM/IPAM.
+
+NetBox already models devices, prefixes, circuits, and VRFs. What it does not model natively is the **commercial / operational service** that those objects deliver — the Cogent DIA circuit `NW-123456`, the customer L3VPN, the IP transit handoff.
+
+This plugin adds a `Service` object: a unique service ID, a type, a tenant, a lifecycle, and many-to-many links to the NetBox objects that implement it. Tags are still useful for loose labels; a Service is the object you open when someone asks “what does this customer product actually run on?”
+
+## What a Service is
+
+Each Service has:
+
+| Area | Fields |
+| --- | --- |
+| Identity | Unique `service_id`, type (L2VPN, L3VPN, DIA, IP Transit, CDN, Voice), description, status, tenant |
+| Lifecycle | Order date, planned activation, installed, contract start/end, requested disconnect, decommissioned |
+| Delivery | Devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, VMs |
+| Files | PDF/other files (`ServiceAttachment`) plus NetBox image attachments (photos) on the Images tab |
+
+Status reuses NetBox circuit statuses so services line up with how circuits are already tracked.
+
+Date checks: contract end cannot precede start; decommissioned cannot precede installed or requested disconnect.
+
+## Why not just tags?
+
+Tagging a prefix `dia` does not tell you which customer product it belongs to, when it was ordered, or which handoff interface delivers it.
+
+With a Service you can, for example, create DIA `NW-123456` for a tenant and then:
+
+- Point at the PE/CE devices and the exact interfaces
+- Attach the WAN prefixes, VRF, and ASN
+- Record order / install / contract dates
+- Store the signed PDF and site photos next to the inventory
+
+The detail page is split for that workflow: **technical inventory on the left**, **lifecycle and attachments on the right**.
 
 ## Features
-- Add, edit, and delete business services.
-- Relate services to network objects (devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, virtual machines).
-- Filter and view services in a table with all relevant fields.
-- Custom forms and views for relating specific network objects to a service.
-- Integrated navigation and changelog support.
+
+- CRUD for business services from **Business Services** in the nav
+- Relate/unrelate DCIM, IPAM, VPN, and virtualization objects from the service detail view
+- Filter and search by service ID, description, tenant, status, and dates
+- Bulk delete from the list view
+- Changelog, tags, and custom fields (`NetBoxModel`)
+- REST API under `/api/plugins/services/` (list/detail include `id` and lifecycle fields)
+- File attachments and native image attachments
 
 ## Usage
-- Access the plugin from the NetBox navigation menu under "Business Services".
-- Create new services and relate them to network resources.
-- Use the detail view to see all associations for a service.
 
-![alt text](https://github.com/baldoarturo/netbox-services/raw/master/02-main.png)
+1. Open **Business Services** in the plugin menu.
+2. Create a service (ID + type at minimum).
+3. On the detail page, use **Assign** on each technical card to attach inventory.
+4. Fill lifecycle dates when the order, install, or disconnect happens.
+5. Add contracts/PDFs under **Attachments**; photos go on the **Images** tab.
 
-## Why
-Because you might be looking for such a thing. 
-
-Tagging is great for simple categorization, but the NetBox Services plugin goes far beyond that by letting you model real business services and their relationships to network resources.
-
-Instead of just tagging a device or prefix as "DIA," you can create a full DIA service—like "NW-123456" from Cogent—and link it to all relevant devices, interfaces, prefixes, VRFs, ASNs, and more.
-
-For example, with a DIA service from Cogent (Service ID: NW-123456), you can:
-
-- See all devices and interfaces delivering that service.
-- Track the exact IP prefixes, VRFs, and ASNs involved.
-- Relate cables, tunnels, and even virtual machines to the service.
-- View and manage all these relationships in one place, with history and forms tailored to each resource.
-
-This gives you a true service-centric view of your network, making troubleshooting, reporting, and change management much more powerful and organized than simple tagging ever could.
+![Plugin screenshot](https://github.com/baldoarturo/netbox-services/raw/master/02-main.png)
 
 ## Requirements
-- NetBox 4.x or later
-- Django 4.x or later
+
+- NetBox 4.4+
+- Python 3.10+
 
 ## Installation
-1. Clone this repository into your NetBox `plugins` directory. You can also install it on your system / venv / coffee maker with
+
+Install the package:
+
 ```bash
-pip install netbox_services
+pip install netbox-services
 ```
 
-2. Add `'netbox_services'` to the `PLUGINS` list in your NetBox configuration.
+Or clone this repo next to your NetBox plugins and install in editable mode.
+
+Enable it in `configuration.py`:
 
 ```python
-    PLUGINS = [
-        'netbox_services'
-    ],
+PLUGINS = [
+    'netbox_services',
+]
 ```
 
-3. Run migrations: `python manage.py migrate netbox_services`
-4. Restart NetBox.
+Apply migrations and restart NetBox:
+
+```bash
+python manage.py migrate netbox_services
+```
+
+The UI lives at `/plugins/services/`. The API lives at `/api/plugins/services/` (no extra `/services/` segment).
 
 ## License
+
 MIT
+
