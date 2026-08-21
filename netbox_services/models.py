@@ -138,7 +138,7 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
     )
     l2vpns = models.ManyToManyField(
         L2VPN,
-        verbose_name='Related Route Targets',
+        verbose_name='Related L2VPNs',
     )
     tunnels = models.ManyToManyField(
         Tunnel,
