@@ -26,6 +26,16 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         to_field_name='slug',
         label='Tenant (slug)',
     )
+    depends_on_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='depends_on',
+        queryset=Service.objects.all(),
+        label='Depends on (ID)',
+    )
+    dependent_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='dependents',
+        queryset=Service.objects.all(),
+        label='Dependent (ID)',
+    )
 
     class Meta:
         model = Service

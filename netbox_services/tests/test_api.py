@@ -67,3 +67,35 @@ class ServiceAPITestCase(APITestCase):
         response = self.client.delete(url, **self.header)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Service.objects.filter(pk=service.pk).exists())
+
+
+class ServiceDependencyAPITestCase(APITestCase):
+    model = Service
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.dia = Service.objects.create(service_id='DIA-1', type='dia')
+        cls.l3vpn = Service.objects.create(service_id='L3VPN-1', type='l3vpn')
+        cls.l3vpn.depends_on.add(cls.dia)
+
+    def test_depends_on_is_exposed_in_detail(self):
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.l3vpn.pk})
+        response = self.client.get(url, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['depends_on'], [self.dia.pk])
+
+    def test_dependents_is_exposed_in_detail(self):
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.dia.pk})
+        response = self.client.get(url, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['dependents'], [self.l3vpn.pk])
+
+    def test_filter_by_depends_on_id(self):
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-list')
+        response = self.client.get(url, {'depends_on_id': self.dia.pk}, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['service_id'], 'L3VPN-1')

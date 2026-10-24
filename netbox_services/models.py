@@ -147,6 +147,14 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
         VirtualMachine,
         verbose_name='Related Virtual Machines',
     )
+    depends_on = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='dependents',
+        blank=True,
+        verbose_name='Depends On',
+        help_text='Other services this one relies on (e.g. an L3VPN riding over a DIA circuit)',
+    )
     tags = TaggableManager(
         related_name='netbox_services_service_set',
     )

@@ -19,6 +19,8 @@ class ServiceSerializer(NetBoxModelSerializer):
     l2vpns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     tunnels = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     virtual_machines = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    depends_on = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    dependents = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Service
@@ -48,6 +50,8 @@ class ServiceSerializer(NetBoxModelSerializer):
             'l2vpns',
             'tunnels',
             'virtual_machines',
+            'depends_on',
+            'dependents',
             'tags',
             'custom_fields',
             'created',

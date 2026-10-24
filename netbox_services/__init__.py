@@ -15,5 +15,9 @@ class Services(PluginConfig):
     base_url = 'services'
     min_version = '4.4.0'
 
+    def ready(self):
+        super().ready()
+        from . import signals  # noqa: F401
+
 
 config = Services

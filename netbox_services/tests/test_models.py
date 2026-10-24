@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from circuits.choices import CircuitStatusChoices
 from tenancy.models import Tenant
+from utilities.exceptions import AbortRequest
 
 from netbox_services.models import Service, ServiceAttachment, ServiceTypeChoices
 
@@ -79,6 +80,49 @@ class ServiceTestCase(TestCase):
         Service.objects.create(service_id='NW-1', type='dia', tenant=tenant)
         with self.assertRaises(Exception):
             tenant.delete()
+
+
+class ServiceDependencyTestCase(TestCase):
+
+    def setUp(self):
+        self.dia = Service.objects.create(service_id='DIA-1', type='dia')
+        self.l3vpn = Service.objects.create(service_id='L3VPN-1', type='l3vpn')
+        self.voice = Service.objects.create(service_id='VOICE-1', type='voice')
+
+    def test_can_add_a_dependency(self):
+        self.l3vpn.depends_on.add(self.dia)
+        self.assertIn(self.dia, self.l3vpn.depends_on.all())
+
+    def test_dependents_is_the_reverse_relation(self):
+        self.l3vpn.depends_on.add(self.dia)
+        self.assertIn(self.l3vpn, self.dia.dependents.all())
+
+    def test_cannot_depend_on_itself(self):
+        with self.assertRaises(AbortRequest):
+            self.dia.depends_on.add(self.dia)
+
+    def test_cannot_create_direct_cycle(self):
+        self.l3vpn.depends_on.add(self.dia)
+        with self.assertRaises(AbortRequest):
+            self.dia.depends_on.add(self.l3vpn)
+
+    def test_cannot_create_indirect_cycle(self):
+        # voice -> l3vpn -> dia, then dia -> voice would close the loop
+        self.l3vpn.depends_on.add(self.dia)
+        self.voice.depends_on.add(self.l3vpn)
+        with self.assertRaises(AbortRequest):
+            self.dia.depends_on.add(self.voice)
+
+    def test_diamond_dependency_is_allowed(self):
+        # voice depends on both l3vpn and dia independently; not a cycle
+        self.voice.depends_on.add(self.l3vpn)
+        self.voice.depends_on.add(self.dia)
+        self.assertEqual(self.voice.depends_on.count(), 2)
+
+    def test_deleting_service_clears_dependents_relation(self):
+        self.l3vpn.depends_on.add(self.dia)
+        self.dia.delete()
+        self.assertEqual(self.l3vpn.depends_on.count(), 0)
 
 
 class ServiceAttachmentTestCase(TestCase):

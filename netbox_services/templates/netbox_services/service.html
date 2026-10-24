@@ -209,6 +209,35 @@
         </tr>
       </table>
     </div>
+
+    <div class="card">
+      <h2 class="card-header">{% trans "Dependencies" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Depends on" %}</th>
+          <td>
+            {% for dependency in object.depends_on.all %}
+              {{ dependency|linkify }}{% if not forloop.last %}<br>{% endif %}
+            {% empty %}
+              {{ ''|placeholder }}
+            {% endfor %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'plugins:netbox_services:relate_depends_on' pk=object.pk %}" class="btn btn-sm btn-ghost-primary">{% trans "Assign" %}</a>
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Dependents" %}</th>
+          <td colspan="2">
+            {% for dependent in object.dependents.all %}
+              {{ dependent|linkify }}{% if not forloop.last %}<br>{% endif %}
+            {% empty %}
+              {{ ''|placeholder }}
+            {% endfor %}
+          </td>
+        </tr>
+      </table>
+    </div>
   </div>
 
   {# Right: lifecycle + attachments #}

@@ -17,6 +17,7 @@ from .forms import (
     ServiceRelatedL2VPNsForm,
     ServiceRelatedTunnelsForm,
     ServiceRelatedVirtualMachinesForm,
+    ServiceRelatedDependsOnForm,
 )
 
 urlpatterns = [
@@ -77,5 +78,9 @@ urlpatterns = [
     path('<int:pk>/relate/virtual_machines/',
          ServiceRelatedObjectsView.as_view(form=ServiceRelatedVirtualMachinesForm),
          name='relate_virtual_machines',
+         ),
+    path('<int:pk>/relate/depends_on/',
+         ServiceRelatedObjectsView.as_view(form=ServiceRelatedDependsOnForm),
+         name='relate_depends_on',
          ),
 ]

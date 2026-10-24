@@ -80,6 +80,17 @@ ServiceRelatedTunnelsForm = related_objects_form('tunnels')
 ServiceRelatedVirtualMachinesForm = related_objects_form('virtual_machines')
 
 
+class ServiceRelatedDependsOnForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = ['depends_on']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['depends_on'].queryset = Service.objects.exclude(pk=self.instance.pk)
+
+
 class ServiceRelatedInterfacesForm(forms.ModelForm):
     class Meta:
         model = Service

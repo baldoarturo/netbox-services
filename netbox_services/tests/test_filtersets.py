@@ -55,3 +55,24 @@ class ServiceFilterSetTestCase(TestCase):
     def test_no_filters_returns_all(self):
         results = self.filterset({}, self.queryset).qs
         self.assertEqual(results.count(), 3)
+
+
+class ServiceDependencyFilterSetTestCase(TestCase):
+    queryset = Service.objects.all()
+    filterset = ServiceFilterSet
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.dia = Service.objects.create(service_id='DIA-1', type='dia')
+        cls.l3vpn = Service.objects.create(service_id='L3VPN-1', type='l3vpn')
+        cls.l3vpn.depends_on.add(cls.dia)
+
+    def test_filter_by_depends_on_id(self):
+        results = self.filterset({'depends_on_id': [self.dia.pk]}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'L3VPN-1')
+
+    def test_filter_by_dependent_id(self):
+        results = self.filterset({'dependent_id': [self.l3vpn.pk]}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'DIA-1')
