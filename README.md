@@ -14,7 +14,8 @@ Each Service has:
 | Area | Fields |
 | --- | --- |
 | Identity | Unique `service_id`, type (L2VPN, L3VPN, DIA, IP Transit, CDN, Voice), description, status, tenant |
-| Lifecycle | Order date, planned activation, installed, contract start/end, requested disconnect, decommissioned |
+| Capacity | Bandwidth and CIR (Mbps), SLA uptime target |
+| Lifecycle | Order date, planned activation, installed, contract start/end, requested disconnect, decommissioned, decommission reason |
 | Delivery | Devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, VMs |
 | Dependencies | Other services this one depends on, and the services that depend on it in turn |
 | Files | PDF/other files (`ServiceAttachment`) plus NetBox image attachments (photos) on the Images tab |
@@ -40,7 +41,9 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 - Relate/unrelate DCIM, IPAM, VPN, and virtualization objects from the service detail view
 - Service-to-service dependencies (e.g. a CDN service riding over an L2L circuit), with direct and
   indirect cycle detection, visible on the detail page and the list view
-- Filter and search by service ID, description, tenant, status, dates, and dependencies
+- Bandwidth/CIR and an SLA uptime target per service, plus a decommission reason for churn tracking
+- Filter and search by service ID, description, tenant, status, dates, dependencies, bandwidth/CIR
+  range, SLA uptime, and decommission reason
 - Bulk delete from the list view
 - Changelog, tags, and custom fields (`NetBoxModel`)
 - REST API under `/api/plugins/services/` (list/detail include `id`, lifecycle fields, and
