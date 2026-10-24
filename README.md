@@ -88,7 +88,7 @@ Apply migrations and restart NetBox:
 python manage.py migrate netbox_services
 ```
 
-The UI lives at `/plugins/services/`. The API lives at `/api/plugins/services/` (no extra `/services/` segment).
+The UI lives at `/plugins/services/`. The API lives at `/api/plugins/services/`.
 
 ## License
 
