@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-services"
-version = "0.0.16"
+version = "0.0.17"
 description = "A NetBox services Plugin for Service Providers"
 requires-python = ">=3.10"
 
@@ -30,6 +30,7 @@ classifiers=[
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
 ]
 
 [project.urls]
