@@ -16,6 +16,7 @@ Each Service has:
 | Identity | Unique `service_id`, type (L2VPN, L3VPN, DIA, IP Transit, CDN, Voice), description, status, tenant |
 | Lifecycle | Order date, planned activation, installed, contract start/end, requested disconnect, decommissioned |
 | Delivery | Devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, VMs |
+| Dependencies | Other services this one depends on, and the services that depend on it in turn |
 | Files | PDF/other files (`ServiceAttachment`) plus NetBox image attachments (photos) on the Images tab |
 
 Status reuses NetBox circuit statuses so services line up with how circuits are already tracked.
@@ -39,10 +40,13 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 
 - CRUD for business services from **Business Services** in the nav
 - Relate/unrelate DCIM, IPAM, VPN, and virtualization objects from the service detail view
-- Filter and search by service ID, description, tenant, status, and dates
+- Service-to-service dependencies (e.g. a CDN service riding over an L2L circuit), with direct and
+  indirect cycle detection, visible on the detail page and the list view
+- Filter and search by service ID, description, tenant, status, dates, and dependencies
 - Bulk delete from the list view
 - Changelog, tags, and custom fields (`NetBoxModel`)
-- REST API under `/api/plugins/services/` (list/detail include `id` and lifecycle fields)
+- REST API under `/api/plugins/services/` (list/detail include `id`, lifecycle fields, and
+  dependencies; query-string filtering works the same as the UI)
 - File attachments and native image attachments
 
 ## Usage
