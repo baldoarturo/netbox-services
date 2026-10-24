@@ -1,17 +1,20 @@
 import django_tables2 as tables
 
-from netbox.tables import NetBoxTable
-from netbox.tables.columns import ToggleColumn
+from netbox.tables import NetBoxTable, columns
 
 from .models import Service
 
 
 class ServiceListTable(NetBoxTable):
-    pk = ToggleColumn(accessor='pk')
+    pk = columns.ToggleColumn(accessor='pk')
     service_id = tables.Column(
         linkify=True,
         verbose_name='Service ID',
 
+    )
+    depends_on = columns.ManyToManyColumn(
+        linkify_item=True,
+        verbose_name='Depends On',
     )
 
     class Meta(NetBoxTable.Meta):
@@ -28,5 +31,6 @@ class ServiceListTable(NetBoxTable):
             'installed',
             'contract_end',
             'decommissioned',
+            'depends_on',
         )
-        default_columns = ('pk', 'service_id', 'type', 'description', 'status', 'tenant', 'installed')
+        default_columns = ('pk', 'service_id', 'type', 'description', 'status', 'tenant', 'installed', 'depends_on')
