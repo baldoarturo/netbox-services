@@ -19,6 +19,9 @@ class NewServiceForm(NetBoxModelForm):
             'service_id',
             'description',
             'status',
+            'bandwidth',
+            'cir',
+            'sla_uptime_percent',
             'tenant',
             'order_date',
             'planned_activation',
@@ -27,6 +30,7 @@ class NewServiceForm(NetBoxModelForm):
             'contract_end',
             'requested_disconnect',
             'decommissioned',
+            'decommission_reason',
         )
         widgets = {
             'order_date': DatePicker(),

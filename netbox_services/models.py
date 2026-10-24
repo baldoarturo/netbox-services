@@ -31,6 +31,16 @@ class ServiceTypeChoices(ChoiceSet):
     ]
 
 
+class DecommissionReasonChoices(ChoiceSet):
+    CHOICES = [
+        ('churn', 'Customer churn'),
+        ('nonpayment', 'Non-payment'),
+        ('upgrade', 'Upgrade/migration'),
+        ('site_closure', 'Site closure'),
+        ('other', 'Other'),
+    ]
+
+
 class Service(ImageAttachmentsMixin, NetBoxModel):
     type = models.CharField(
         choices=ServiceTypeChoices,
@@ -54,6 +64,26 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
         verbose_name='Status',
         default=CircuitStatusChoices.STATUS_PLANNED,
         blank=True
+    )
+    bandwidth = models.PositiveIntegerField(
+        verbose_name='Bandwidth',
+        blank=True,
+        null=True,
+        help_text='Total circuit bandwidth, in Mbps'
+    )
+    cir = models.PositiveIntegerField(
+        verbose_name='CIR',
+        blank=True,
+        null=True,
+        help_text='Committed Information Rate, in Mbps'
+    )
+    sla_uptime_percent = models.DecimalField(
+        verbose_name='SLA uptime %',
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text='Contracted uptime SLA, e.g. 99.90'
     )
     tenant = models.ForeignKey(
         Tenant,
@@ -101,6 +131,11 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
         blank=True,
         null=True,
         help_text='Date the service was actually taken down'
+    )
+    decommission_reason = models.CharField(
+        choices=DecommissionReasonChoices,
+        verbose_name='Decommission reason',
+        blank=True,
     )
     devices = models.ManyToManyField(
         Device,
@@ -186,6 +221,10 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
         if self.requested_disconnect and self.decommissioned and self.decommissioned < self.requested_disconnect:
             raise ValidationError({
                 'decommissioned': 'Decommissioned date cannot be earlier than the requested disconnect date.'
+            })
+        if self.cir and self.bandwidth and self.cir > self.bandwidth:
+            raise ValidationError({
+                'cir': 'CIR cannot exceed the total bandwidth.'
             })
 
 

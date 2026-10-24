@@ -31,6 +31,18 @@
           <td>{% badge object.get_status_display bg_color=object.get_status_color %}</td>
         </tr>
         <tr>
+          <th scope="row">{% trans "Bandwidth" %}</th>
+          <td>{% if object.bandwidth %}{{ object.bandwidth }} Mbps{% else %}{{ ''|placeholder }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "CIR" %}</th>
+          <td>{% if object.cir %}{{ object.cir }} Mbps{% else %}{{ ''|placeholder }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "SLA uptime" %}</th>
+          <td>{% if object.sla_uptime_percent %}{{ object.sla_uptime_percent }}%{% else %}{{ ''|placeholder }}{% endif %}</td>
+        </tr>
+        <tr>
           <th scope="row">{% trans "Tags" %}</th>
           <td>
             {% for tag in object.tags.all %}
@@ -272,6 +284,10 @@
         <tr>
           <th scope="row">{% trans "Decommissioned" %}</th>
           <td>{{ object.decommissioned|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Decommission reason" %}</th>
+          <td>{{ object.get_decommission_reason_display|placeholder }}</td>
         </tr>
       </table>
     </div>

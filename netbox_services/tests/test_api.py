@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.urls import reverse
 from rest_framework import status
 
@@ -99,3 +101,42 @@ class ServiceDependencyAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(response.data['results'][0]['service_id'], 'L3VPN-1')
+
+
+class ServiceCapacityAPITestCase(APITestCase):
+    model = Service
+
+    @classmethod
+    def setUpTestData(cls):
+        Service.objects.create(
+            service_id='NW-1', type='dia', bandwidth=1000, cir=500, sla_uptime_percent='99.90'
+        )
+
+    def test_capacity_fields_exposed_in_detail(self):
+        self.add_permissions('netbox_services.view_service')
+        service = Service.objects.get(service_id='NW-1')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': service.pk})
+        response = self.client.get(url, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['bandwidth'], 1000)
+        self.assertEqual(response.data['cir'], 500)
+        self.assertEqual(response.data['sla_uptime_percent'], Decimal('99.90'))
+
+    def test_filter_by_bandwidth_min(self):
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-list')
+        response = self.client.get(url, {'bandwidth_min': 500}, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+
+    def test_create_service_rejects_cir_above_bandwidth(self):
+        self.add_permissions('netbox_services.add_service')
+        url = reverse('plugins-api:netbox_services-api:service-list')
+        data = {
+            'type': 'dia',
+            'service_id': 'NW-2',
+            'bandwidth': 100,
+            'cir': 200,
+        }
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

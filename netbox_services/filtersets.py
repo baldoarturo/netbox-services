@@ -4,7 +4,7 @@ from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet
 from tenancy.models import Tenant
 
-from .models import Service, ServiceTypeChoices
+from .models import DecommissionReasonChoices, Service, ServiceTypeChoices
 
 
 class ServiceFilterSet(NetBoxModelFilterSet):
@@ -14,6 +14,35 @@ class ServiceFilterSet(NetBoxModelFilterSet):
     )
     service_id = django_filters.CharFilter(
         lookup_expr='icontains',
+    )
+    decommission_reason = django_filters.MultipleChoiceFilter(
+        choices=DecommissionReasonChoices,
+        null_value=None,
+    )
+    bandwidth_min = django_filters.NumberFilter(
+        field_name='bandwidth',
+        lookup_expr='gte',
+        label='Bandwidth (Mbps, minimum)',
+    )
+    bandwidth_max = django_filters.NumberFilter(
+        field_name='bandwidth',
+        lookup_expr='lte',
+        label='Bandwidth (Mbps, maximum)',
+    )
+    cir_min = django_filters.NumberFilter(
+        field_name='cir',
+        lookup_expr='gte',
+        label='CIR (Mbps, minimum)',
+    )
+    cir_max = django_filters.NumberFilter(
+        field_name='cir',
+        lookup_expr='lte',
+        label='CIR (Mbps, maximum)',
+    )
+    sla_uptime_percent_min = django_filters.NumberFilter(
+        field_name='sla_uptime_percent',
+        lookup_expr='gte',
+        label='SLA uptime % (minimum)',
     )
     tenant_id = django_filters.ModelMultipleChoiceFilter(
         field_name='tenant',

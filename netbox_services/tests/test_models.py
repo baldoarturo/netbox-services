@@ -70,6 +70,27 @@ class ServiceTestCase(TestCase):
         with self.assertRaises(ValidationError):
             service.clean()
 
+    def test_clean_allows_cir_equal_to_bandwidth(self):
+        service = Service(service_id='NW-1', type='dia', bandwidth=1000, cir=1000)
+        service.clean()
+
+    def test_clean_rejects_cir_above_bandwidth(self):
+        service = Service(service_id='NW-1', type='dia', bandwidth=500, cir=1000)
+        with self.assertRaises(ValidationError):
+            service.clean()
+
+    def test_can_set_sla_uptime_percent(self):
+        service = Service.objects.create(
+            service_id='NW-1', type='dia', sla_uptime_percent='99.90'
+        )
+        self.assertEqual(str(service.sla_uptime_percent), '99.90')
+
+    def test_can_set_decommission_reason(self):
+        service = Service.objects.create(
+            service_id='NW-1', type='dia', decommission_reason='churn'
+        )
+        self.assertEqual(service.decommission_reason, 'churn')
+
     def test_service_id_must_be_unique(self):
         Service.objects.create(service_id='NW-1', type='dia')
         with self.assertRaises(Exception):

@@ -25,12 +25,16 @@ class ServiceListTable(NetBoxTable):
             'type',
             'description',
             'status',
+            'bandwidth',
+            'cir',
+            'sla_uptime_percent',
             'tenant',
             'order_date',
             'planned_activation',
             'installed',
             'contract_end',
             'decommissioned',
+            'decommission_reason',
             'depends_on',
         )
         default_columns = ('pk', 'service_id', 'type', 'description', 'status', 'tenant', 'installed', 'depends_on')

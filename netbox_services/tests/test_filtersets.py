@@ -76,3 +76,45 @@ class ServiceDependencyFilterSetTestCase(TestCase):
         results = self.filterset({'dependent_id': [self.l3vpn.pk]}, self.queryset).qs
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.first().service_id, 'DIA-1')
+
+
+class ServiceCapacityFilterSetTestCase(TestCase):
+    queryset = Service.objects.all()
+    filterset = ServiceFilterSet
+
+    @classmethod
+    def setUpTestData(cls):
+        Service.objects.create(
+            service_id='NW-1', type='dia', bandwidth=100, cir=50, sla_uptime_percent='99.00'
+        )
+        Service.objects.create(
+            service_id='NW-2', type='dia', bandwidth=1000, cir=500, sla_uptime_percent='99.99'
+        )
+        Service.objects.create(
+            service_id='NW-3', type='dia', decommission_reason='churn'
+        )
+
+    def test_filter_by_bandwidth_min(self):
+        results = self.filterset({'bandwidth_min': 500}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'NW-2')
+
+    def test_filter_by_bandwidth_max(self):
+        results = self.filterset({'bandwidth_max': 500}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'NW-1')
+
+    def test_filter_by_cir_min(self):
+        results = self.filterset({'cir_min': 500}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'NW-2')
+
+    def test_filter_by_sla_uptime_percent_min(self):
+        results = self.filterset({'sla_uptime_percent_min': 99.5}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'NW-2')
+
+    def test_filter_by_decommission_reason(self):
+        results = self.filterset({'decommission_reason': ['churn']}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service_id, 'NW-3')
