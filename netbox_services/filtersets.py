@@ -21,7 +21,7 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         label='Tenant (ID)',
     )
     tenant = django_filters.ModelMultipleChoiceFilter(
-        field_name='tenant',
+        field_name='tenant__slug',
         queryset=Tenant.objects.all(),
         to_field_name='slug',
         label='Tenant (slug)',
