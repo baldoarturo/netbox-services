@@ -21,8 +21,6 @@ Each Service has:
 
 Status reuses NetBox circuit statuses so services line up with how circuits are already tracked.
 
-Date checks: contract end cannot precede start; decommissioned cannot precede installed or requested disconnect.
-
 ## Why not just tags?
 
 A tag is a label; a Service is a record. Tagging a prefix `dia` doesn't tell you which customer it's for, when it was ordered, or which interface hands it off — a Service does.
