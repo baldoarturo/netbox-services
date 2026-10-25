@@ -265,7 +265,12 @@
     </div>
 
     <div class="card">
-      <h2 class="card-header">{% trans "Incidents" %}</h2>
+      <h2 class="card-header d-flex justify-content-between align-items-center">
+        {% trans "Incidents" %}
+        <a href="{% url 'plugins:netbox_services:service_incident_add' pk=object.pk %}" class="btn btn-sm btn-green">
+          <i class="mdi mdi-plus-thick"></i> {% trans "Add" %}
+        </a>
+      </h2>
       <table class="table table-hover attr-table">
         <tr>
           <th scope="row">{% trans "Occurred" %}</th>
@@ -280,8 +285,12 @@
             <td>
               {% if incident.event_type == 'down' %}
                 {% badge incident.get_event_type_display bg_color='red' %}
-              {% else %}
+              {% elif incident.event_type == 'degraded' %}
+                {% badge incident.get_event_type_display bg_color='orange' %}
+              {% elif incident.event_type == 'up' %}
                 {% badge incident.get_event_type_display bg_color='green' %}
+              {% else %}
+                {% badge incident.get_event_type_display bg_color='gray' %}
               {% endif %}
             </td>
             <td>{{ incident.get_severity_display|placeholder }}</td>

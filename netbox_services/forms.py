@@ -9,7 +9,7 @@ from ipam.models import ASN, VRF, IPAddress, Prefix, RouteTarget, VLAN
 from vpn.models import L2VPN, Tunnel
 from virtualization.models import VirtualMachine
 
-from .models import Service, ServiceAttachment, ServiceTypeChoices
+from .models import Service, ServiceAttachment, ServiceIncident, ServiceTypeChoices
 
 
 class NewServiceForm(NetBoxModelForm):
@@ -121,6 +121,13 @@ class ServiceAttachmentForm(forms.ModelForm):
     class Meta:
         model = ServiceAttachment
         fields = ('name', 'file', 'description')
+
+
+class ServiceIncidentForm(forms.ModelForm):
+
+    class Meta:
+        model = ServiceIncident
+        fields = ('event_type', 'severity', 'description', 'source')
 
 
 # Maps each tab on the impact-search page to the Service field it searches

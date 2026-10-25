@@ -45,7 +45,9 @@ class DecommissionReasonChoices(ChoiceSet):
 class IncidentEventTypeChoices(ChoiceSet):
     CHOICES = [
         ('down', 'Down'),
+        ('degraded', 'Degraded'),
         ('up', 'Up'),
+        ('other', 'Other'),
     ]
 
 

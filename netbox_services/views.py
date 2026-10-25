@@ -10,7 +10,7 @@ from netbox.views.generic import (
     BulkDeleteView,
 )
 
-from .models import Service, ServiceAttachment
+from .models import Service, ServiceAttachment, ServiceIncident
 from .tables import ServiceListTable
 from .forms import (
     IMPACT_SEARCH_FIELDS,
@@ -19,6 +19,7 @@ from .forms import (
     NewServiceForm,
     ServiceAttachmentForm,
     ServiceFilterSetForm,
+    ServiceIncidentForm,
 )
 
 from .filtersets import ServiceFilterSet
@@ -85,6 +86,33 @@ class ServiceAttachmentDeleteView(ObjectDeleteView):
 
     def get_object(self, **kwargs):
         return get_object_or_404(self.queryset, pk=kwargs.get('attachment_pk'))
+
+
+class ServiceIncidentAddView(ObjectEditView):
+    """
+    Create-only view for logging an incident against a service from the UI.
+    Incidents aren't edited or deleted once logged (occurred_at is
+    server-assigned and never meant to change), so this only needs a create
+    path, unlike ServiceAttachmentEditView which also handles edits.
+    """
+    queryset = ServiceIncident.objects.all()
+    form = ServiceIncidentForm
+
+    def dispatch(self, request, *args, **kwargs):
+        # The URL kwarg here is the Service's pk, not an incident's, so this
+        # always creates a new incident. ObjectEditView.dispatch() would
+        # otherwise read `kwargs` being non-empty as "editing" and require
+        # the 'change' permission instead of 'add'.
+        self._permission_action = 'add'
+        return super(ObjectEditView, self).dispatch(request, *args, **kwargs)
+
+    def alter_object(self, obj, request, url_args, url_kwargs):
+        if not obj.pk:
+            obj.service = get_object_or_404(Service, pk=url_kwargs.get('pk'))
+        return obj
+
+    def get_object(self, **kwargs):
+        return self.queryset.model()
 
 #
 #   TREE VIEWS

@@ -4,6 +4,7 @@ from .views import (
     ImpactSearchView,
     ServiceAttachmentDeleteView,
     ServiceAttachmentEditView,
+    ServiceIncidentAddView,
     ServiceRelatedObjectsView,
 )
 from .forms import (
@@ -40,6 +41,10 @@ urlpatterns = [
     path('<int:pk>/attachments/<int:attachment_pk>/delete/',
          ServiceAttachmentDeleteView.as_view(),
          name='service_attachment_delete',
+         ),
+    path('<int:pk>/incidents/add/',
+         ServiceIncidentAddView.as_view(),
+         name='service_incident_add',
          ),
     path('<int:pk>/relate/devices/',
          ServiceRelatedObjectsView.as_view(form=ServiceRelatedDevicesForm),

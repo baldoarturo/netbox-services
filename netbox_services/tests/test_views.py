@@ -5,7 +5,7 @@ from django.urls import reverse
 from dcim.models import Device, DeviceRole, DeviceType, Interface, Manufacturer, Site
 from users.models import ObjectPermission
 
-from netbox_services.models import Service
+from netbox_services.models import Service, ServiceIncident
 
 User = get_user_model()
 
@@ -125,3 +125,51 @@ class ImpactSearchViewTestCase(TestCase):
         cascaded_idx = content.find('Also affected')
         self.assertIn('DIA-1', content[direct_idx:cascaded_idx])
         self.assertIn('CDN-1', content[cascaded_idx:])
+
+
+class ServiceIncidentAddViewTestCase(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.service = Service.objects.create(service_id='NW-1', type='dia')
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser')
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def _grant(self, *actions):
+        from django.contrib.contenttypes.models import ContentType
+        permission = ObjectPermission.objects.create(
+            name='Incident permission',
+            actions=list(actions),
+        )
+        permission.object_types.add(ContentType.objects.get_for_model(ServiceIncident))
+        permission.users.add(self.user)
+
+    def test_add_view_requires_permission(self):
+        url = reverse('plugins:netbox_services:service_incident_add', kwargs={'pk': self.service.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_add_view_form_excludes_occurred_at(self):
+        self._grant('add')
+        url = reverse('plugins:netbox_services:service_incident_add', kwargs={'pk': self.service.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'name="occurred_at"')
+
+    def test_post_creates_incident_and_redirects_to_service(self):
+        self._grant('add')
+        url = reverse('plugins:netbox_services:service_incident_add', kwargs={'pk': self.service.pk})
+        response = self.client.post(url, {
+            'event_type': 'down',
+            'severity': 'critical',
+            'description': 'Fiber cut',
+            'source': 'Manual (NOC)',
+        })
+        incident = ServiceIncident.objects.get(service=self.service)
+        self.assertEqual(incident.description, 'Fiber cut')
+        self.assertIsNotNone(incident.occurred_at)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.service.get_absolute_url())

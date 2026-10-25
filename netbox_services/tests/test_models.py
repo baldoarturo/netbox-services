@@ -199,3 +199,11 @@ class ServiceIncidentTestCase(TestCase):
         incidents = list(self.service.incidents.all())
         self.assertEqual(incidents[0], second)
         self.assertEqual(incidents[1], first)
+
+    def test_accepts_degraded_event_type(self):
+        incident = ServiceIncident.objects.create(service=self.service, event_type='degraded')
+        self.assertEqual(incident.event_type, 'degraded')
+
+    def test_accepts_other_event_type(self):
+        incident = ServiceIncident.objects.create(service=self.service, event_type='other')
+        self.assertEqual(incident.event_type, 'other')
