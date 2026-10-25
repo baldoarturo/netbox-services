@@ -18,6 +18,7 @@ Each Service has:
 | Lifecycle | Order date, planned activation, installed, contract start/end, requested disconnect, decommissioned, decommission reason |
 | Delivery | Devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, VMs |
 | Dependencies | Other services this one depends on, and the services that depend on it in turn |
+| Incidents | Down/up events reported against the service, typically pushed by an external NMS |
 | Files | PDF/other files (`ServiceAttachment`) plus NetBox image attachments (photos) on the Images tab |
 
 Status reuses NetBox circuit statuses so services line up with how circuits are already tracked.
@@ -42,8 +43,10 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 - Service-to-service dependencies (e.g. a CDN service riding over an L2L circuit), with direct and
   indirect cycle detection, visible on the detail page and the list view
 - Bandwidth/CIR and an SLA uptime target per service, plus a decommission reason for churn tracking
+- Incident history per service: an external NMS can `POST` a down/up event by `service_id`, and
+  NetBox stamps the time it received it rather than trusting a caller-supplied timestamp
 - Filter and search by service ID, description, tenant, status, dates, dependencies, bandwidth/CIR
-  range, SLA uptime, and decommission reason
+  range, SLA uptime, decommission reason, and incident event type/severity
 - Bulk delete from the list view
 - Changelog, tags, and custom fields (`NetBoxModel`)
 - REST API under `/api/plugins/services/` (list/detail include `id`, lifecycle fields, and
