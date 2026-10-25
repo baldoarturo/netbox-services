@@ -16,7 +16,7 @@ Each Service has:
 | Identity | Unique `service_id`, type (L2VPN, L3VPN, DIA, IP Transit, CDN, Voice), description, status, tenant |
 | Capacity | Bandwidth and CIR (Mbps), SLA uptime target |
 | Lifecycle | Order date, planned activation, installed, contract start/end, requested disconnect, decommissioned, decommission reason |
-| Delivery | Devices, interfaces, cables, VLANs, prefixes, VRFs, ASNs, route targets, L2VPNs, tunnels, VMs |
+| Delivery | Devices, interfaces, cables, VLANs, prefixes, IP addresses, VRFs, ASNs, route targets, L2VPNs, tunnels, VMs |
 | Dependencies | Other services this one depends on, and the services that depend on it in turn |
 | Incidents | Down/up events reported against the service, typically pushed by an external NMS |
 | Files | PDF/other files (`ServiceAttachment`) plus NetBox image attachments (photos) on the Images tab |
@@ -47,6 +47,10 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
   NetBox stamps the time it received it rather than trusting a caller-supplied timestamp
 - Filter and search by service ID, description, tenant, status, dates, dependencies, bandwidth/CIR
   range, SLA uptime, decommission reason, and incident event type/severity
+- **Impact Search**: pick a device, interface, cable, VLAN, prefix, IP address, VRF, ASN, route
+  target, L2VPN, tunnel, or VM, and see every service that would be affected if it were
+  removed — both the services that reference it directly and, through `depends_on`, the services
+  that depend on those in turn
 - Bulk delete from the list view
 - Changelog, tags, and custom fields (`NetBoxModel`)
 - REST API under `/api/plugins/services/` (list/detail include `id`, lifecycle fields, and
