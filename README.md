@@ -43,8 +43,9 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 - Service-to-service dependencies (e.g. a CDN service riding over an L2L circuit), with direct and
   indirect cycle detection, visible on the detail page and the list view
 - Bandwidth/CIR and an SLA uptime target per service, plus a decommission reason for churn tracking
-- Incident history per service: an external NMS can `POST` a down/up event by `service_id`, and
-  NetBox stamps the time it received it rather than trusting a caller-supplied timestamp
+- Incident history per service: an external NMS can `POST` a down/degraded/up/other event by
+  `service_id`, and NetBox stamps the time it received it rather than trusting a caller-supplied
+  timestamp. Incidents can also be logged by hand from the service detail page
 - Filter and search by service ID, description, tenant, status, dates, dependencies, bandwidth/CIR
   range, SLA uptime, decommission reason, and incident event type/severity
 - **Impact Search**: pick a device, interface, cable, VLAN, prefix, IP address, VRF, ASN, route
