@@ -1,10 +1,17 @@
 import django_filters
 from django.db.models import Q
 
-from netbox.filtersets import NetBoxModelFilterSet
+from netbox.filtersets import ChangeLoggedModelFilterSet, NetBoxModelFilterSet
 from tenancy.models import Tenant
 
-from .models import DecommissionReasonChoices, Service, ServiceTypeChoices
+from .models import (
+    DecommissionReasonChoices,
+    IncidentEventTypeChoices,
+    IncidentSeverityChoices,
+    Service,
+    ServiceIncident,
+    ServiceTypeChoices,
+)
 
 
 class ServiceFilterSet(NetBoxModelFilterSet):
@@ -85,4 +92,42 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         return queryset.filter(
             Q(service_id__icontains=value) |
             Q(description__icontains=value)
+        )
+
+
+class ServiceIncidentFilterSet(ChangeLoggedModelFilterSet):
+    q = django_filters.CharFilter(
+        method='search',
+        label='Search',
+    )
+    service_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='service',
+        queryset=Service.objects.all(),
+        label='Service (ID)',
+    )
+    service = django_filters.ModelMultipleChoiceFilter(
+        field_name='service__service_id',
+        queryset=Service.objects.all(),
+        to_field_name='service_id',
+        label='Service (service ID)',
+    )
+    event_type = django_filters.MultipleChoiceFilter(
+        choices=IncidentEventTypeChoices,
+        null_value=None,
+    )
+    severity = django_filters.MultipleChoiceFilter(
+        choices=IncidentSeverityChoices,
+        null_value=None,
+    )
+
+    class Meta:
+        model = ServiceIncident
+        fields = ('id', 'description', 'source', 'occurred_at')
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(description__icontains=value) |
+            Q(source__icontains=value)
         )

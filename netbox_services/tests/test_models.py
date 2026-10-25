@@ -7,7 +7,7 @@ from circuits.choices import CircuitStatusChoices
 from tenancy.models import Tenant
 from utilities.exceptions import AbortRequest
 
-from netbox_services.models import Service, ServiceAttachment, ServiceTypeChoices
+from netbox_services.models import Service, ServiceAttachment, ServiceIncident, ServiceTypeChoices
 
 
 class ServiceTestCase(TestCase):
@@ -168,3 +168,34 @@ class ServiceAttachmentTestCase(TestCase):
         attachment = ServiceAttachment.objects.create(service=self.service, name='Contract')
         self.service.delete()
         self.assertFalse(ServiceAttachment.objects.filter(pk=attachment.pk).exists())
+
+
+class ServiceIncidentTestCase(TestCase):
+
+    def setUp(self):
+        self.service = Service.objects.create(service_id='NW-1', type='dia')
+
+    def test_occurred_at_is_set_automatically(self):
+        incident = ServiceIncident.objects.create(service=self.service, event_type='down')
+        self.assertIsNotNone(incident.occurred_at)
+
+    def test_str_includes_service_and_event_type(self):
+        incident = ServiceIncident.objects.create(service=self.service, event_type='down')
+        self.assertIn('NW-1', str(incident))
+        self.assertIn('Down', str(incident))
+
+    def test_get_absolute_url_returns_service_url(self):
+        incident = ServiceIncident.objects.create(service=self.service, event_type='down')
+        self.assertEqual(incident.get_absolute_url(), self.service.get_absolute_url())
+
+    def test_deleting_service_cascades_to_incidents(self):
+        incident = ServiceIncident.objects.create(service=self.service, event_type='down')
+        self.service.delete()
+        self.assertFalse(ServiceIncident.objects.filter(pk=incident.pk).exists())
+
+    def test_ordering_is_most_recent_first(self):
+        first = ServiceIncident.objects.create(service=self.service, event_type='down')
+        second = ServiceIncident.objects.create(service=self.service, event_type='up')
+        incidents = list(self.service.incidents.all())
+        self.assertEqual(incidents[0], second)
+        self.assertEqual(incidents[1], first)

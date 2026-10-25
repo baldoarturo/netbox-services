@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 from netbox.api.serializers import NetBoxModelSerializer
-from netbox_services.models import Service
+from netbox.api.serializers.base import ValidatedModelSerializer
+from netbox_services.models import Service, ServiceIncident
 
 class ServiceSerializer(NetBoxModelSerializer):
 
@@ -61,3 +62,30 @@ class ServiceSerializer(NetBoxModelSerializer):
             'created',
             'last_updated',
         )
+
+
+class ServiceIncidentSerializer(ValidatedModelSerializer):
+
+    url = serializers.HyperlinkedIdentityField(
+        view_name='plugins-api:netbox_services-api:serviceincident-detail'
+    )
+    service = serializers.SlugRelatedField(
+        slug_field='service_id',
+        queryset=Service.objects.all(),
+    )
+
+    class Meta:
+        model = ServiceIncident
+        fields = (
+            'id',
+            'url',
+            'service',
+            'event_type',
+            'severity',
+            'description',
+            'source',
+            'occurred_at',
+            'created',
+            'last_updated',
+        )
+        read_only_fields = ('occurred_at',)

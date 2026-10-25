@@ -22,7 +22,7 @@ from .filtersets import ServiceFilterSet
 
 @register_model_view(Service, name='view', path='', detail=True)
 class ServiceView(ObjectView):
-    queryset = Service.objects.prefetch_related('attachments', 'images', 'tags')
+    queryset = Service.objects.prefetch_related('attachments', 'images', 'tags', 'incidents')
     template_name = 'netbox_services/service.html'
 
 @register_model_view(Service, name='list', path='', detail=False)

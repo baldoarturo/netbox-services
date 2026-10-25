@@ -2,6 +2,7 @@ from taggit.managers import TaggableManager
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from netbox.models import ChangeLoggedModel, NetBoxModel
 from netbox.models.features import ImageAttachmentsMixin
@@ -38,6 +39,22 @@ class DecommissionReasonChoices(ChoiceSet):
         ('upgrade', 'Upgrade/migration'),
         ('site_closure', 'Site closure'),
         ('other', 'Other'),
+    ]
+
+
+class IncidentEventTypeChoices(ChoiceSet):
+    CHOICES = [
+        ('down', 'Down'),
+        ('up', 'Up'),
+    ]
+
+
+class IncidentSeverityChoices(ChoiceSet):
+    CHOICES = [
+        ('critical', 'Critical'),
+        ('major', 'Major'),
+        ('minor', 'Minor'),
+        ('warning', 'Warning'),
     ]
 
 
@@ -268,3 +285,55 @@ class ServiceAttachment(ChangeLoggedModel):
     def delete(self, *args, **kwargs):
         self.file.delete(save=False)
         super().delete(*args, **kwargs)
+
+
+class ServiceIncident(ChangeLoggedModel):
+    """
+    A down/up event reported against a Service, typically pushed by an
+    external NMS via the API. occurred_at is always set to the time NetBox
+    received the event, not a timestamp supplied by the caller, so the
+    history reflects when we found out rather than a value we can't verify.
+    """
+    service = models.ForeignKey(
+        to=Service,
+        on_delete=models.CASCADE,
+        related_name='incidents'
+    )
+    event_type = models.CharField(
+        choices=IncidentEventTypeChoices,
+        verbose_name='Event type',
+    )
+    severity = models.CharField(
+        choices=IncidentSeverityChoices,
+        verbose_name='Severity',
+        blank=True,
+    )
+    description = models.CharField(
+        verbose_name='Description',
+        max_length=200,
+        blank=True,
+    )
+    source = models.CharField(
+        verbose_name='Source',
+        max_length=100,
+        blank=True,
+        help_text='Reporting system, e.g. the NMS that sent this event'
+    )
+    occurred_at = models.DateTimeField(
+        verbose_name='Occurred at',
+        default=timezone.now,
+        editable=False,
+    )
+
+    clone_fields = ('service',)
+
+    class Meta:
+        ordering = ('-occurred_at', '-pk')
+        verbose_name = 'Service incident'
+        verbose_name_plural = 'Service incidents'
+
+    def __str__(self):
+        return f'{self.service} {self.get_event_type_display()} ({self.occurred_at:%Y-%m-%d %H:%M})'
+
+    def get_absolute_url(self):
+        return self.service.get_absolute_url()

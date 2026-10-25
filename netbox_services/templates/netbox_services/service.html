@@ -250,6 +250,38 @@
         </tr>
       </table>
     </div>
+
+    <div class="card">
+      <h2 class="card-header">{% trans "Incidents" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Occurred" %}</th>
+          <th scope="row">{% trans "Event" %}</th>
+          <th scope="row">{% trans "Severity" %}</th>
+          <th scope="row">{% trans "Description" %}</th>
+          <th scope="row">{% trans "Source" %}</th>
+        </tr>
+        {% for incident in object.incidents.all %}
+          <tr>
+            <td>{{ incident.occurred_at }}</td>
+            <td>
+              {% if incident.event_type == 'down' %}
+                {% badge incident.get_event_type_display bg_color='red' %}
+              {% else %}
+                {% badge incident.get_event_type_display bg_color='green' %}
+              {% endif %}
+            </td>
+            <td>{{ incident.get_severity_display|placeholder }}</td>
+            <td>{{ incident.description|placeholder }}</td>
+            <td>{{ incident.source|placeholder }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5">{{ ''|placeholder }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
   </div>
 
   {# Right: lifecycle + attachments #}

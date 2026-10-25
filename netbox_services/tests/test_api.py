@@ -1,3 +1,4 @@
+from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 
 from django.urls import reverse
@@ -5,7 +6,7 @@ from rest_framework import status
 
 from utilities.testing import APITestCase
 
-from netbox_services.models import Service
+from netbox_services.models import Service, ServiceIncident
 
 
 class ServiceAPITestCase(APITestCase):
@@ -140,3 +141,66 @@ class ServiceCapacityAPITestCase(APITestCase):
         }
         response = self.client.post(url, data, format='json', **self.header)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ServiceIncidentAPITestCase(APITestCase):
+    model = ServiceIncident
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.service = Service.objects.create(service_id='NW-1', type='dia')
+
+    def test_create_incident_by_service_id(self):
+        self.add_permissions('netbox_services.add_serviceincident')
+        url = reverse('plugins-api:netbox_services-api:serviceincident-list')
+        data = {
+            'service': 'NW-1',
+            'event_type': 'down',
+            'severity': 'critical',
+            'description': 'Interface down',
+            'source': 'LibreNMS',
+        }
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['service'], 'NW-1')
+        self.assertIsNotNone(response.data['occurred_at'])
+
+    def test_create_incident_ignores_supplied_occurred_at(self):
+        self.add_permissions('netbox_services.add_serviceincident')
+        url = reverse('plugins-api:netbox_services-api:serviceincident-list')
+        fake_past = datetime(2000, 1, 1, tzinfo=dt_timezone.utc).isoformat()
+        data = {
+            'service': 'NW-1',
+            'event_type': 'down',
+            'occurred_at': fake_past,
+        }
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertNotIn('2000-01-01', response.data['occurred_at'])
+
+    def test_create_incident_for_unknown_service_is_400(self):
+        self.add_permissions('netbox_services.add_serviceincident')
+        url = reverse('plugins-api:netbox_services-api:serviceincident-list')
+        data = {
+            'service': 'DOES-NOT-EXIST',
+            'event_type': 'down',
+        }
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_incident_without_permission_is_forbidden(self):
+        url = reverse('plugins-api:netbox_services-api:serviceincident-list')
+        data = {'service': 'NW-1', 'event_type': 'down'}
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_incidents_filtered_by_service(self):
+        other_service = Service.objects.create(service_id='NW-2', type='l3vpn')
+        ServiceIncident.objects.create(service=self.service, event_type='down')
+        ServiceIncident.objects.create(service=other_service, event_type='down')
+
+        self.add_permissions('netbox_services.view_serviceincident')
+        url = reverse('plugins-api:netbox_services-api:serviceincident-list')
+        response = self.client.get(url, {'service': 'NW-1'}, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)

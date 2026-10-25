@@ -2,8 +2,8 @@ from django.test import TestCase
 
 from tenancy.models import Tenant
 
-from netbox_services.filtersets import ServiceFilterSet
-from netbox_services.models import Service
+from netbox_services.filtersets import ServiceFilterSet, ServiceIncidentFilterSet
+from netbox_services.models import Service, ServiceIncident
 
 
 class ServiceFilterSetTestCase(TestCase):
@@ -118,3 +118,40 @@ class ServiceCapacityFilterSetTestCase(TestCase):
         results = self.filterset({'decommission_reason': ['churn']}, self.queryset).qs
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.first().service_id, 'NW-3')
+
+
+class ServiceIncidentFilterSetTestCase(TestCase):
+    queryset = ServiceIncident.objects.all()
+    filterset = ServiceIncidentFilterSet
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.svc1 = Service.objects.create(service_id='NW-1', type='dia')
+        cls.svc2 = Service.objects.create(service_id='NW-2', type='l3vpn')
+        ServiceIncident.objects.create(
+            service=cls.svc1, event_type='down', severity='critical', source='LibreNMS'
+        )
+        ServiceIncident.objects.create(
+            service=cls.svc2, event_type='up', severity='minor', source='Zabbix'
+        )
+
+    def test_filter_by_service_id(self):
+        results = self.filterset({'service_id': [self.svc1.pk]}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+
+    def test_filter_by_service_service_id(self):
+        results = self.filterset({'service': ['NW-2']}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+        self.assertEqual(results.first().service, self.svc2)
+
+    def test_filter_by_event_type(self):
+        results = self.filterset({'event_type': ['down']}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+
+    def test_filter_by_severity(self):
+        results = self.filterset({'severity': ['critical']}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
+
+    def test_search_matches_source(self):
+        results = self.filterset({'q': 'Zabbix'}, self.queryset).qs
+        self.assertEqual(results.count(), 1)
