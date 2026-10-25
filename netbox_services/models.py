@@ -9,7 +9,7 @@ from netbox.models.features import ImageAttachmentsMixin
 
 from tenancy.models import Tenant
 from dcim.models import Device, Interface, Cable
-from ipam.models import VRF, Prefix, VLAN, ASN, RouteTarget
+from ipam.models import VRF, IPAddress, Prefix, VLAN, ASN, RouteTarget
 from vpn.models import L2VPN, Tunnel
 from virtualization.models import VirtualMachine
 from circuits.choices import CircuitStatusChoices
@@ -173,6 +173,11 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
     prefixes = models.ManyToManyField(
         Prefix,
         verbose_name='Related IP Prefixes',
+    )
+    ip_addresses = models.ManyToManyField(
+        IPAddress,
+        verbose_name='Related IP Addresses',
+        blank=True,
     )
     vrfs = models.ManyToManyField(
         VRF,

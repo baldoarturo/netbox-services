@@ -14,6 +14,7 @@ class ServiceSerializer(NetBoxModelSerializer):
     cables = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     vlans = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     prefixes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    ip_addresses = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     vrfs = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     asns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     route_targets = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
@@ -49,6 +50,7 @@ class ServiceSerializer(NetBoxModelSerializer):
             'cables',
             'vlans',
             'prefixes',
+            'ip_addresses',
             'vrfs',
             'asns',
             'route_targets',

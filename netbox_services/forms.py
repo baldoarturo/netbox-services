@@ -1,10 +1,13 @@
 from django import forms
-from utilities.forms.fields import CommentField
+from utilities.forms.fields import CommentField, DynamicModelChoiceField
 from utilities.forms.widgets import DatePicker
 
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
 from tenancy.models import Tenant
-from dcim.models import Interface
+from dcim.models import Cable, Device, Interface
+from ipam.models import ASN, VRF, IPAddress, Prefix, RouteTarget, VLAN
+from vpn.models import L2VPN, Tunnel
+from virtualization.models import VirtualMachine
 
 from .models import Service, ServiceAttachment, ServiceTypeChoices
 
@@ -76,6 +79,7 @@ ServiceRelatedDevicesForm = related_objects_form('devices')
 ServiceRelatedCablesForm = related_objects_form('cables')
 ServiceRelatedVLANsForm = related_objects_form('vlans')
 ServiceRelatedPrefixesForm = related_objects_form('prefixes')
+ServiceRelatedIPAddressesForm = related_objects_form('ip_addresses')
 ServiceRelatedVRFsForm = related_objects_form('vrfs')
 ServiceRelatedASNsForm = related_objects_form('asns')
 ServiceRelatedRouteTargetsForm = related_objects_form('route_targets')
@@ -117,3 +121,52 @@ class ServiceAttachmentForm(forms.ModelForm):
     class Meta:
         model = ServiceAttachment
         fields = ('name', 'file', 'description')
+
+
+# Maps each tab on the impact-search page to the Service field it searches
+# against. Order here drives the order of the tabs in the template.
+IMPACT_SEARCH_FIELDS = (
+    'device',
+    'interface',
+    'cable',
+    'vlan',
+    'prefix',
+    'ip_address',
+    'vrf',
+    'asn',
+    'route_target',
+    'l2vpn',
+    'tunnel',
+    'virtual_machine',
+)
+
+# The Service M2M field each tab's result should be matched against.
+IMPACT_SEARCH_SERVICE_FIELD = {
+    'device': 'devices',
+    'interface': 'interfaces',
+    'cable': 'cables',
+    'vlan': 'vlans',
+    'prefix': 'prefixes',
+    'ip_address': 'ip_addresses',
+    'vrf': 'vrfs',
+    'asn': 'asns',
+    'route_target': 'route_targets',
+    'l2vpn': 'l2vpns',
+    'tunnel': 'tunnels',
+    'virtual_machine': 'virtual_machines',
+}
+
+
+class ImpactSearchForm(forms.Form):
+    device = DynamicModelChoiceField(queryset=Device.objects.all(), required=False)
+    interface = DynamicModelChoiceField(queryset=Interface.objects.all(), required=False)
+    cable = DynamicModelChoiceField(queryset=Cable.objects.all(), required=False)
+    vlan = DynamicModelChoiceField(queryset=VLAN.objects.all(), required=False)
+    prefix = DynamicModelChoiceField(queryset=Prefix.objects.all(), required=False)
+    ip_address = DynamicModelChoiceField(queryset=IPAddress.objects.all(), required=False)
+    vrf = DynamicModelChoiceField(queryset=VRF.objects.all(), required=False)
+    asn = DynamicModelChoiceField(queryset=ASN.objects.all(), required=False)
+    route_target = DynamicModelChoiceField(queryset=RouteTarget.objects.all(), required=False)
+    l2vpn = DynamicModelChoiceField(queryset=L2VPN.objects.all(), required=False)
+    tunnel = DynamicModelChoiceField(queryset=Tunnel.objects.all(), required=False)
+    virtual_machine = DynamicModelChoiceField(queryset=VirtualMachine.objects.all(), required=False)

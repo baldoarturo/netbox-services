@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from dcim.models import Device, DeviceRole, DeviceType, Interface, Manufacturer, Site
 from users.models import ObjectPermission
 
 from netbox_services.models import Service
@@ -64,3 +65,63 @@ class ServiceViewTestCase(TestCase):
         url = reverse('plugins:netbox_services:service_delete', kwargs={'pk': self.service.pk})
         self.client.post(url, {'confirm': True})
         self.assertFalse(Service.objects.filter(pk=self.service.pk).exists())
+
+
+class ImpactSearchViewTestCase(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        manufacturer = Manufacturer.objects.create(name='Acme', slug='acme')
+        device_type = DeviceType.objects.create(manufacturer=manufacturer, model='Router', slug='router')
+        role = DeviceRole.objects.create(name='Router', slug='router')
+        site = Site.objects.create(name='Site 1', slug='site-1')
+        cls.device = Device.objects.create(
+            name='router-1', site=site, device_type=device_type, role=role
+        )
+        cls.interface = Interface.objects.create(device=cls.device, name='eth0', type='1000base-t')
+
+        cls.dia = Service.objects.create(service_id='DIA-1', type='dia')
+        cls.dia.interfaces.add(cls.interface)
+        cls.cdn = Service.objects.create(service_id='CDN-1', type='cdn')
+        cls.cdn.depends_on.add(cls.dia)
+        cls.unrelated = Service.objects.create(service_id='UNRELATED-1', type='voice')
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username='testuser')
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse('plugins:netbox_services:impact_search'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_no_query_params_shows_empty_form(self):
+        response = self.client.get(reverse('plugins:netbox_services:impact_search'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('Directly affected', response.content.decode())
+
+    def test_search_by_interface_finds_direct_and_cascaded(self):
+        response = self.client.get(
+            reverse('plugins:netbox_services:impact_search'),
+            {'interface': self.interface.pk},
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        direct_idx = content.find('Directly affected')
+        cascaded_idx = content.find('Also affected')
+        self.assertIn('DIA-1', content[direct_idx:cascaded_idx])
+        self.assertIn('CDN-1', content[cascaded_idx:])
+        self.assertNotIn('UNRELATED-1', content)
+
+    def test_search_by_device_finds_only_direct_match(self):
+        self.dia.devices.add(self.device)
+        response = self.client.get(
+            reverse('plugins:netbox_services:impact_search'),
+            {'device': self.device.pk},
+        )
+        content = response.content.decode()
+        direct_idx = content.find('Directly affected')
+        cascaded_idx = content.find('Also affected')
+        self.assertIn('DIA-1', content[direct_idx:cascaded_idx])
+        self.assertIn('CDN-1', content[cascaded_idx:])

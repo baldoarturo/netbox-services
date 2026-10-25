@@ -1,6 +1,7 @@
 from django.urls import path, include
 from utilities.urls import get_model_urls
 from .views import (
+    ImpactSearchView,
     ServiceAttachmentDeleteView,
     ServiceAttachmentEditView,
     ServiceRelatedObjectsView,
@@ -11,6 +12,7 @@ from .forms import (
     ServiceRelatedCablesForm,
     ServiceRelatedVLANsForm,
     ServiceRelatedPrefixesForm,
+    ServiceRelatedIPAddressesForm,
     ServiceRelatedVRFsForm,
     ServiceRelatedASNsForm,
     ServiceRelatedRouteTargetsForm,
@@ -21,6 +23,10 @@ from .forms import (
 )
 
 urlpatterns = [
+    path('impact/',
+         ImpactSearchView.as_view(),
+         name='impact_search',
+         ),
     path('',
          include(get_model_urls('netbox_services', 'service', detail=False))
          ),
@@ -54,6 +60,10 @@ urlpatterns = [
     path('<int:pk>/relate/prefixes/',
          ServiceRelatedObjectsView.as_view(form=ServiceRelatedPrefixesForm),
          name='relate_prefixes',
+         ),
+    path('<int:pk>/relate/ip_addresses/',
+         ServiceRelatedObjectsView.as_view(form=ServiceRelatedIPAddressesForm),
+         name='relate_ip_addresses',
          ),
     path('<int:pk>/relate/vrfs/',
          ServiceRelatedObjectsView.as_view(form=ServiceRelatedVRFsForm),

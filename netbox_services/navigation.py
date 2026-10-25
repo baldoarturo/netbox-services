@@ -14,11 +14,17 @@ services = PluginMenuItem(
     )
 )
 
+impact_search = PluginMenuItem(
+    auth_required=True,
+    link='plugins:netbox_services:impact_search',
+    link_text='Impact Search',
+)
+
 
 menu = PluginMenu(
     label='Business Services',
     groups=(
-        ('Services', (services,)),
+        ('Services', (services, impact_search)),
     ),
     icon_class='mdi mdi-receipt-text-arrow-right'
 )

@@ -1,6 +1,7 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
+from django.views import View
 
-from utilities.views import register_model_view
+from utilities.views import ConditionalLoginRequiredMixin, register_model_view
 from netbox.views.generic import (
     ObjectView,
     ObjectDeleteView,
@@ -11,7 +12,14 @@ from netbox.views.generic import (
 
 from .models import Service, ServiceAttachment
 from .tables import ServiceListTable
-from .forms import NewServiceForm, ServiceAttachmentForm, ServiceFilterSetForm
+from .forms import (
+    IMPACT_SEARCH_FIELDS,
+    IMPACT_SEARCH_SERVICE_FIELD,
+    ImpactSearchForm,
+    NewServiceForm,
+    ServiceAttachmentForm,
+    ServiceFilterSetForm,
+)
 
 from .filtersets import ServiceFilterSet
 
@@ -99,3 +107,62 @@ class ServiceRelatedObjectsView(ObjectEditView):
     subclasses that differed only in which form they used.
     """
     queryset = Service.objects.all()
+
+
+#
+#   IMPACT SEARCH
+#
+
+
+def _affected_services(obj, service_field):
+    """Services directly linked to `obj` through `service_field`."""
+    return Service.objects.filter(**{service_field: obj})
+
+
+def _cascade_dependents(services):
+    """
+    Breadth-first walk of depends_on's reverse relation (dependents): starting
+    from a set of directly-affected services, find every service that depends
+    on one of them, transitively. Returns the full set including the starting
+    services.
+    """
+    affected = {s.pk: s for s in services}
+    frontier = list(services)
+    while frontier:
+        next_frontier = []
+        for service in frontier:
+            for dependent in service.dependents.all():
+                if dependent.pk not in affected:
+                    affected[dependent.pk] = dependent
+                    next_frontier.append(dependent)
+        frontier = next_frontier
+    return affected
+
+
+class ImpactSearchView(ConditionalLoginRequiredMixin, View):
+    template_name = 'netbox_services/impact_search.html'
+
+    def get(self, request):
+        form = ImpactSearchForm(request.GET or None)
+        direct = []
+        cascaded = []
+        searched_field = None
+
+        if form.is_valid():
+            for field_name in IMPACT_SEARCH_FIELDS:
+                obj = form.cleaned_data.get(field_name)
+                if obj:
+                    searched_field = field_name
+                    service_field = IMPACT_SEARCH_SERVICE_FIELD[field_name]
+                    direct = list(_affected_services(obj, service_field))
+                    all_affected = _cascade_dependents(direct)
+                    direct_pks = {s.pk for s in direct}
+                    cascaded = [s for pk, s in all_affected.items() if pk not in direct_pks]
+                    break
+
+        return render(request, self.template_name, {
+            'form': form,
+            'searched_field': searched_field,
+            'direct_services': direct,
+            'cascaded_services': cascaded,
+        })

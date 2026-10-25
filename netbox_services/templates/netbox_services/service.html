@@ -130,6 +130,19 @@
           </td>
         </tr>
         <tr>
+          <th scope="row">{% trans "IP Addresses" %}</th>
+          <td>
+            {% for ip in object.ip_addresses.all %}
+              {{ ip|linkify }}{% if not forloop.last %}<br>{% endif %}
+            {% empty %}
+              {{ ''|placeholder }}
+            {% endfor %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'plugins:netbox_services:relate_ip_addresses' pk=object.pk %}" class="btn btn-sm btn-ghost-primary">{% trans "Assign" %}</a>
+          </td>
+        </tr>
+        <tr>
           <th scope="row">{% trans "ASNs" %}</th>
           <td>
             {% for asn in object.asns.all %}
