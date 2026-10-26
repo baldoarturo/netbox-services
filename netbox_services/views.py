@@ -15,7 +15,7 @@ from netbox.views.generic import (
 )
 
 from .models import Service, ServiceAttachment, ServiceIncident
-from .tables import ServiceListTable
+from .tables import ServiceContractsTable, ServiceListTable
 from .forms import (
     IMPACT_SEARCH_FIELDS,
     IMPACT_SEARCH_SERVICE_FIELD,
@@ -245,7 +245,7 @@ class ContractsView(ConditionalLoginRequiredMixin, View):
         else:
             queryset = Service.objects.none()
 
-        table = ServiceListTable(queryset)
+        table = ServiceContractsTable(queryset)
         table.configure(request)
 
         return render(request, self.template_name, {

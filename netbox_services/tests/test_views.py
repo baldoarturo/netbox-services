@@ -252,3 +252,11 @@ class ContractsViewTestCase(TestCase):
         self.assertIn('EXPIRING-SOON-1', content)
         self.assertNotIn('FAR-FUTURE-1', content)
         self.assertNotIn('EXPIRED-1', content)
+
+    def test_table_shows_contract_dates(self):
+        response = self.client.get(
+            reverse('plugins:netbox_services:contracts'), {'contract_expired': 'true'}
+        )
+        content = response.content.decode()
+        self.assertIn('Contract start', content)
+        self.assertIn('Contract end', content)
