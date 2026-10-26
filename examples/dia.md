@@ -45,3 +45,5 @@ If you have a signed service order or contract PDF, open **Attachments** → **A
 ## Result
 
 Anyone looking at `NW-123456` sees the PE/CE devices and handoff interface, the WAN addressing, the contract paperwork, and the full order-to-decommission timeline in one page — the exact "what does this product actually run on?" answer this plugin exists for.
+
+![NW-123456 service detail page](dia.png)

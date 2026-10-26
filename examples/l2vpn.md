@@ -42,3 +42,5 @@ Leave **Prefixes**, **IP Addresses**, **VRFs**, and **ASNs** empty — this is L
 ## Result
 
 The service detail page now shows the two devices, their interfaces, and (if assigned) the cable and VLAN under **Delivery**, alongside the lifecycle dates and SLA you set via the API. If another service — say a CDN node — rides on top of this L2L, record that under **Dependencies** → **Assign** on the *other* service's "Depends on" field, pointing back at `L2L-10042`.
+
+![L2L-10042 service detail page](l2l.png)

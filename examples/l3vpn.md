@@ -40,3 +40,5 @@ Open `/plugins/services/43/`:
 ## Result
 
 The service now ties together every site's router and interface, the customer's address space, and the VRF/route-target plumbing that keeps their traffic isolated from other customers sharing the same MPLS core — all from one place, instead of having to reconstruct it from the VRF's own page.
+
+![L3VPN-2210 service detail page](l3vpn.png)

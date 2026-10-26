@@ -48,3 +48,5 @@ On `/plugins/services/46/`, find the **Dependencies** card → **Assign** next t
 ## Result
 
 `CDN-EDGE-301` now shows `L2L-10042` under "Depends on", and `L2L-10042` shows `CDN-EDGE-301` under "Dependents". Running **Impact Search** (`/plugins/services/impact/`) on the L2L's device or interface will list `CDN-EDGE-301` under "Also affected" — exactly the chain you'd want to see before touching that circuit.
+
+![CDN-EDGE-301 service detail page](cdn.png)
