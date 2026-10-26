@@ -3,10 +3,10 @@
 
 {% block extra_controls %}
   <div class="btn-group" role="group">
-    <a href="?" class="btn btn-sm {% if is_contract_expired_tab %}btn-outline-primary{% else %}btn-primary{% endif %}">
+    <a href="?" class="btn {% if is_contract_expired_tab %}btn-outline-primary{% else %}btn-primary{% endif %}">
       {% trans "All Services" %}
     </a>
-    <a href="?contract_expired=true" class="btn btn-sm {% if is_contract_expired_tab %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    <a href="?contract_expired=true" class="btn {% if is_contract_expired_tab %}btn-primary{% else %}btn-outline-primary{% endif %}">
       {% trans "Contract Expired" %}
       <span class="badge text-bg-secondary">{{ contract_expired_count }}</span>
     </a>
