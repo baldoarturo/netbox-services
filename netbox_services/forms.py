@@ -166,7 +166,11 @@ IMPACT_SEARCH_SERVICE_FIELD = {
 
 class ImpactSearchForm(forms.Form):
     device = DynamicModelChoiceField(queryset=Device.objects.all(), required=False)
-    interface = DynamicModelChoiceField(queryset=Interface.objects.all(), required=False)
+    interface = DynamicModelChoiceField(
+        queryset=Interface.objects.all(),
+        required=False,
+        query_params={'device_id': '$device'},
+    )
     cable = DynamicModelChoiceField(queryset=Cable.objects.all(), required=False)
     vlan = DynamicModelChoiceField(queryset=VLAN.objects.all(), required=False)
     prefix = DynamicModelChoiceField(queryset=Prefix.objects.all(), required=False)

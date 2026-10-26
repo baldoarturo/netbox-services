@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from tenancy.models import Tenant
 
-from netbox_services.forms import NewServiceForm
+from netbox_services.forms import ImpactSearchForm, NewServiceForm
 from netbox_services.models import Service
 
 
@@ -50,3 +50,18 @@ class NewServiceFormTestCase(TestCase):
             'tenant': tenant.pk,
         })
         self.assertTrue(form.is_valid(), form.errors)
+
+
+class ImpactSearchFormTestCase(TestCase):
+
+    def test_interface_field_scopes_to_selected_device(self):
+        # The interface field must declare device -> device_id as a dynamic
+        # query param so its widget only offers interfaces belonging to
+        # whichever device is chosen elsewhere in the same form, the same
+        # way ServiceRelatedInterfacesForm scopes interfaces to a service's
+        # already-assigned devices.
+        field = ImpactSearchForm().fields['interface']
+        self.assertEqual(
+            field.widget.attrs.get('data-dynamic-params'),
+            '[{"fieldName":"device","queryParam":"device_id"}]',
+        )
