@@ -83,13 +83,16 @@ class ServiceFilterSet(NetBoxModelFilterSet):
     )
 
     def filter_contract_expired(self, queryset, name, value):
+        """Filter to (or exclude) services whose contract_end is in the past and aren't decommissioned."""
         expired = Q(contract_end__lt=timezone.localdate()) & ~Q(status='decommissioned')
         return queryset.filter(expired) if value else queryset.exclude(expired)
 
     def filter_contract_end_before(self, queryset, name, value):
-        # Services whose contract ends between today and the given date
-        # (inclusive), i.e. "expiring soon" rather than already expired.
-        # Already-decommissioned services aren't an upcoming concern.
+        """
+        Filter to services whose contract ends between today and the given
+        date (inclusive), i.e. "expiring soon" rather than already expired.
+        Already-decommissioned services aren't an upcoming concern.
+        """
         today = timezone.localdate()
         return queryset.filter(
             contract_end__gte=today,
@@ -112,6 +115,7 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         )
 
     def search(self, queryset, name, value):
+        """Free-text search across service_id and description for the `q` filter."""
         return queryset.filter(
             Q(service_id__icontains=value) |
             Q(description__icontains=value)
@@ -148,6 +152,7 @@ class ServiceIncidentFilterSet(ChangeLoggedModelFilterSet):
         fields = ('id', 'description', 'source', 'occurred_at')
 
     def search(self, queryset, name, value):
+        """Free-text search across description and source for the `q` filter."""
         if not value.strip():
             return queryset
         return queryset.filter(

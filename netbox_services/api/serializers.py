@@ -27,14 +27,17 @@ class ServiceSerializer(NetBoxModelSerializer):
     uptime_percent = serializers.SerializerMethodField()
 
     def _include_degraded(self):
+        """Read the ?include_degraded=1 query param from the current request, if any."""
         request = self.context.get('request')
         return bool(request) and request.query_params.get('include_degraded') == '1'
 
     def get_mttr_seconds(self, obj):
+        """Serialize Service.mttr() as a float number of seconds, or None if there's nothing to average."""
         mttr = obj.mttr(include_degraded=self._include_degraded())
         return mttr.total_seconds() if mttr is not None else None
 
     def get_uptime_percent(self, obj):
+        """Serialize Service.uptime_percent(), honoring the include_degraded toggle."""
         return obj.uptime_percent(include_degraded=self._include_degraded())
 
     class Meta:

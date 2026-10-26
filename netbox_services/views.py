@@ -39,6 +39,7 @@ class ServiceView(ObjectView):
     template_name = 'netbox_services/service.html'
 
     def get_extra_context(self, request, instance):
+        """Compute MTTR/uptime for the detail page, honoring the ?include_degraded=1 toggle."""
         include_degraded = request.GET.get('include_degraded') == '1'
         return {
             'include_degraded': include_degraded,
@@ -78,24 +79,29 @@ class ServiceBulkDeleteView(BulkDeleteView):
 
 
 class ServiceAttachmentEditView(ObjectEditView):
+    """Create or edit a ServiceAttachment nested under its parent service's URL."""
     queryset = ServiceAttachment.objects.all()
     form = ServiceAttachmentForm
 
     def alter_object(self, obj, request, url_args, url_kwargs):
+        """Assign the parent service (from the URL) to a newly-created attachment."""
         if not obj.pk:
             obj.service = get_object_or_404(Service, pk=url_kwargs.get('pk'))
         return obj
 
     def get_object(self, **kwargs):
+        """Look up by attachment_pk (not the URL's service pk) when editing an existing attachment."""
         if attachment_pk := kwargs.get('attachment_pk'):
             return get_object_or_404(self.queryset, pk=attachment_pk)
         return self.queryset.model()
 
 
 class ServiceAttachmentDeleteView(ObjectDeleteView):
+    """Delete a ServiceAttachment nested under its parent service's URL."""
     queryset = ServiceAttachment.objects.all()
 
     def get_object(self, **kwargs):
+        """Look up the attachment by attachment_pk rather than the URL's service pk."""
         return get_object_or_404(self.queryset, pk=kwargs.get('attachment_pk'))
 
 
@@ -110,19 +116,24 @@ class ServiceIncidentAddView(ObjectEditView):
     form = ServiceIncidentForm
 
     def dispatch(self, request, *args, **kwargs):
-        # The URL kwarg here is the Service's pk, not an incident's, so this
-        # always creates a new incident. ObjectEditView.dispatch() would
-        # otherwise read `kwargs` being non-empty as "editing" and require
-        # the 'change' permission instead of 'add'.
+        """
+        Force the 'add' permission check regardless of URL kwargs. The URL
+        kwarg here is the Service's pk, not an incident's, so this always
+        creates a new incident. ObjectEditView.dispatch() would otherwise
+        read `kwargs` being non-empty as "editing" and require the 'change'
+        permission instead of 'add'.
+        """
         self._permission_action = 'add'
         return super(ObjectEditView, self).dispatch(request, *args, **kwargs)
 
     def alter_object(self, obj, request, url_args, url_kwargs):
+        """Assign the parent service (from the URL) to the new incident."""
         if not obj.pk:
             obj.service = get_object_or_404(Service, pk=url_kwargs.get('pk'))
         return obj
 
     def get_object(self, **kwargs):
+        """Always return a new, unsaved incident -- this view never edits an existing one."""
         return self.queryset.model()
 
 #
@@ -179,9 +190,15 @@ def _cascade_dependents(services):
 
 
 class ImpactSearchView(ConditionalLoginRequiredMixin, View):
+    """
+    "What breaks if I remove this?" search: pick a technical object (device,
+    interface, prefix, etc.) and see every Service affected directly, plus
+    any service that depends on those in turn.
+    """
     template_name = 'netbox_services/impact_search.html'
 
     def get(self, request):
+        """Resolve whichever ImpactSearchForm field was submitted and compute direct + cascaded impact."""
         form = ImpactSearchForm(request.GET or None)
         direct = []
         cascaded = []
@@ -223,6 +240,7 @@ class ContractsView(ConditionalLoginRequiredMixin, View):
     template_name = 'netbox_services/contracts.html'
 
     def get(self, request):
+        """Compute the week/month/quarter cutoff dates and filter services by the selected contract-status tab."""
         today = timezone.localdate()
 
         end_of_week = today + timedelta(days=6 - today.weekday())

@@ -18,6 +18,7 @@ from utilities.choices import ChoiceSet
 
 
 def service_attachment_upload(instance, filename):
+    """Build the storage path for a ServiceAttachment's uploaded file, namespaced by service pk."""
     return f'netbox_services/attachments/{instance.service.pk}/{filename}'
 
 
@@ -61,6 +62,12 @@ class IncidentSeverityChoices(ChoiceSet):
 
 
 class Service(ImageAttachmentsMixin, NetBoxModel):
+    """
+    A commercial/operational service (e.g. a DIA circuit, L3VPN, or CDN node)
+    delivered on top of the DCIM/IPAM/VPN objects that actually implement it.
+    Tracks identity, capacity, lifecycle dates, technical inventory links,
+    dependencies on other services, and incident history.
+    """
     type = models.CharField(
         choices=ServiceTypeChoices,
         verbose_name='Service Type',
@@ -290,6 +297,7 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
         return max(0.0, 100 * (1 - downtime.total_seconds() / elapsed.total_seconds()))
 
     def clean(self):
+        """Validate date ordering across the lifecycle fields and that CIR doesn't exceed bandwidth."""
         super().clean()
         if self.contract_start and self.contract_end and self.contract_end < self.contract_start:
             raise ValidationError({

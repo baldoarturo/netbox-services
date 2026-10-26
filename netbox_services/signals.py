@@ -21,6 +21,7 @@ def _has_path(start, target, visited=None):
 
 @receiver(m2m_changed, sender=Service.depends_on.through)
 def validate_no_dependency_cycle(sender, instance, action, pk_set, **kwargs):
+    """Reject self-dependencies and any depends_on addition that would create a dependency cycle."""
     if action != 'pre_add' or not pk_set:
         return
     for pk in pk_set:

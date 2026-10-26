@@ -94,6 +94,7 @@ class ServiceRelatedDependsOnForm(forms.ModelForm):
         fields = ['depends_on']
 
     def __init__(self, *args, **kwargs):
+        """Exclude the service itself from its own depends_on choices to prevent a trivial self-reference."""
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             self.fields['depends_on'].queryset = Service.objects.exclude(pk=self.instance.pk)
@@ -105,6 +106,7 @@ class ServiceRelatedInterfacesForm(forms.ModelForm):
         fields = ['interfaces']
 
     def __init__(self, *args, **kwargs):
+        """Scope the interfaces choices to the devices already assigned to this service."""
         super().__init__(*args, **kwargs)
         related_devices = self.instance.devices.all()
         if related_devices.exists():

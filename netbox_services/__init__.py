@@ -16,6 +16,7 @@ class Services(PluginConfig):
     min_version = '4.4.0'
 
     def ready(self):
+        """Import signals on app startup so the depends_on cycle-check receiver gets registered."""
         super().ready()
         from . import signals  # noqa: F401
 
