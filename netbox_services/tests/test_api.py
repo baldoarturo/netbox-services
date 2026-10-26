@@ -1,7 +1,8 @@
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 
 from utilities.testing import APITestCase
@@ -212,3 +213,38 @@ class ServiceIncidentAPITestCase(APITestCase):
         response = self.client.get(url, {'service': 'NW-1'}, **self.header)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
+
+
+class ServiceMTTRAPITestCase(APITestCase):
+    model = Service
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.service = Service.objects.create(service_id='NW-1', type='dia')
+
+    def _incident(self, event_type, occurred_at):
+        incident = ServiceIncident.objects.create(service=self.service, event_type=event_type)
+        incident.occurred_at = occurred_at
+        incident.save()
+        return incident
+
+    def test_fields_are_none_without_incidents(self):
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.service.pk})
+        response = self.client.get(url, **self.header)
+        self.assertIsNone(response.data['mttr_seconds'])
+        self.assertIsNone(response.data['uptime_percent'])
+
+    def test_mttr_excludes_degraded_unless_requested(self):
+        now = timezone.now()
+        self._incident('degraded', now - timedelta(hours=5))
+        self._incident('up', now - timedelta(hours=1))
+
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.service.pk})
+
+        response = self.client.get(url, **self.header)
+        self.assertIsNone(response.data['mttr_seconds'])
+
+        response = self.client.get(url, {'include_degraded': '1'}, **self.header)
+        self.assertIsNotNone(response.data['mttr_seconds'])

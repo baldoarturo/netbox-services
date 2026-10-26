@@ -23,6 +23,19 @@ class ServiceSerializer(NetBoxModelSerializer):
     virtual_machines = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     depends_on = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     dependents = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    mttr_seconds = serializers.SerializerMethodField()
+    uptime_percent = serializers.SerializerMethodField()
+
+    def _include_degraded(self):
+        request = self.context.get('request')
+        return bool(request) and request.query_params.get('include_degraded') == '1'
+
+    def get_mttr_seconds(self, obj):
+        mttr = obj.mttr(include_degraded=self._include_degraded())
+        return mttr.total_seconds() if mttr is not None else None
+
+    def get_uptime_percent(self, obj):
+        return obj.uptime_percent(include_degraded=self._include_degraded())
 
     class Meta:
         model = Service
@@ -59,6 +72,8 @@ class ServiceSerializer(NetBoxModelSerializer):
             'virtual_machines',
             'depends_on',
             'dependents',
+            'mttr_seconds',
+            'uptime_percent',
             'tags',
             'custom_fields',
             'created',

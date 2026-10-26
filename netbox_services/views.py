@@ -34,6 +34,14 @@ class ServiceView(ObjectView):
     queryset = Service.objects.prefetch_related('attachments', 'images', 'tags', 'incidents')
     template_name = 'netbox_services/service.html'
 
+    def get_extra_context(self, request, instance):
+        include_degraded = request.GET.get('include_degraded') == '1'
+        return {
+            'include_degraded': include_degraded,
+            'mttr': instance.mttr(include_degraded=include_degraded),
+            'uptime_percent': instance.uptime_percent(include_degraded=include_degraded),
+        }
+
 @register_model_view(Service, name='list', path='', detail=False)
 class ServiceListView(ObjectListView):
     queryset = Service.objects.all()

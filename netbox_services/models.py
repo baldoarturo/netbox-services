@@ -232,6 +232,63 @@ class Service(ImageAttachmentsMixin, NetBoxModel):
     def get_status_color(self):
         return CircuitStatusChoices.colors.get(self.status)
 
+    def _down_up_pairs(self, since=None, include_degraded=False):
+        """
+        Walk incidents chronologically and pair each outage-opening event
+        with the next 'up' that follows it. 'down' always opens an outage;
+        'degraded' only does if `include_degraded` is set, so callers can
+        choose whether a partial outage counts against SLA/MTTR instead of
+        that choice being baked in here. 'other' never opens or closes a
+        window. An unpaired trailing outage (still ongoing) is paired with
+        the current time.
+        """
+        opening_types = ['down', 'degraded'] if include_degraded else ['down']
+        incidents = self.incidents.filter(
+            event_type__in=opening_types + ['up']
+        ).order_by('occurred_at')
+        if since:
+            incidents = incidents.filter(occurred_at__gte=since)
+        pairs = []
+        open_since = None
+        for incident in incidents:
+            if incident.event_type in opening_types and open_since is None:
+                open_since = incident.occurred_at
+            elif incident.event_type == 'up' and open_since is not None:
+                pairs.append((open_since, incident.occurred_at))
+                open_since = None
+        if open_since is not None:
+            pairs.append((open_since, timezone.now()))
+        return pairs
+
+    def mttr(self, days=None, include_degraded=False):
+        """
+        Mean Time To Repair: the average duration of each outage, optionally
+        restricted to incidents from the last `days` days. Returns None if
+        there's no resolved outage to average.
+        """
+        since = timezone.now() - timezone.timedelta(days=days) if days else None
+        pairs = self._down_up_pairs(since=since, include_degraded=include_degraded)
+        if not pairs:
+            return None
+        total = sum((end - start for start, end in pairs), timezone.timedelta())
+        return total / len(pairs)
+
+    def uptime_percent(self, include_degraded=False):
+        """
+        Availability since the service's first recorded incident: 1 minus
+        accumulated downtime over the elapsed period. Returns None if the
+        service has no incidents yet (nothing to measure against).
+        """
+        first_incident = self.incidents.order_by('occurred_at').first()
+        if not first_incident:
+            return None
+        pairs = self._down_up_pairs(include_degraded=include_degraded)
+        downtime = sum((end - start for start, end in pairs), timezone.timedelta())
+        elapsed = timezone.now() - first_incident.occurred_at
+        if elapsed.total_seconds() <= 0:
+            return None
+        return max(0.0, 100 * (1 - downtime.total_seconds() / elapsed.total_seconds()))
+
     def clean(self):
         super().clean()
         if self.contract_start and self.contract_end and self.contract_end < self.contract_start:

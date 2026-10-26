@@ -273,6 +273,36 @@
       </h2>
       <table class="table table-hover attr-table">
         <tr>
+          <th scope="row">{% trans "MTTR" %}</th>
+          <td colspan="3">
+            {% if mttr %}{{ mttr }}{% else %}{{ ''|placeholder }}{% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            {% if include_degraded %}
+              <a href="?" class="text-muted small">{% trans "excluding degraded" %}</a>
+            {% else %}
+              <a href="?include_degraded=1" class="text-muted small">{% trans "include degraded" %}</a>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Uptime (since first incident)" %}</th>
+          <td colspan="4">
+            {% if uptime_percent is not None %}
+              {{ uptime_percent|floatformat:2 }}%
+              {% if object.sla_uptime_percent %}
+                {% if uptime_percent >= object.sla_uptime_percent %}
+                  {% badge "Meeting SLA" bg_color='green' %}
+                {% else %}
+                  {% badge "Below SLA" bg_color='red' %}
+                {% endif %}
+              {% endif %}
+            {% else %}
+              {{ ''|placeholder }}
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
           <th scope="row">{% trans "Occurred" %}</th>
           <th scope="row">{% trans "Event" %}</th>
           <th scope="row">{% trans "Severity" %}</th>

@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from circuits.choices import CircuitStatusChoices
 from tenancy.models import Tenant
@@ -207,3 +208,81 @@ class ServiceIncidentTestCase(TestCase):
     def test_accepts_other_event_type(self):
         incident = ServiceIncident.objects.create(service=self.service, event_type='other')
         self.assertEqual(incident.event_type, 'other')
+
+
+class ServiceMTTRTestCase(TestCase):
+    """
+    occurred_at is editable=False / server-assigned, so these tests set it
+    directly after creation to control the timeline precisely.
+    """
+
+    def setUp(self):
+        self.service = Service.objects.create(service_id='NW-1', type='dia', sla_uptime_percent='99.9')
+
+    def _incident(self, event_type, occurred_at):
+        incident = ServiceIncident.objects.create(service=self.service, event_type=event_type)
+        incident.occurred_at = occurred_at
+        incident.save()
+        return incident
+
+    def test_mttr_none_without_incidents(self):
+        self.assertIsNone(self.service.mttr())
+
+    def test_mttr_averages_down_up_pairs(self):
+        now = timezone.now()
+        self._incident('down', now - timedelta(hours=10))
+        self._incident('up', now - timedelta(hours=9))   # 1h outage
+        self._incident('down', now - timedelta(hours=5))
+        self._incident('up', now - timedelta(hours=3))   # 2h outage
+        mttr = self.service.mttr()
+        self.assertAlmostEqual(mttr.total_seconds(), timedelta(hours=1.5).total_seconds(), delta=1)
+
+    def test_mttr_ignores_degraded_by_default(self):
+        now = timezone.now()
+        self._incident('degraded', now - timedelta(hours=10))
+        self._incident('up', now - timedelta(hours=2))  # would be an 8h outage if counted
+        self.assertIsNone(self.service.mttr())
+
+    def test_mttr_includes_degraded_when_requested(self):
+        now = timezone.now()
+        self._incident('degraded', now - timedelta(hours=10))
+        self._incident('up', now - timedelta(hours=2))
+        mttr = self.service.mttr(include_degraded=True)
+        self.assertAlmostEqual(mttr.total_seconds(), timedelta(hours=8).total_seconds(), delta=1)
+
+    def test_mttr_respects_days_window(self):
+        now = timezone.now()
+        self._incident('down', now - timedelta(days=60))
+        self._incident('up', now - timedelta(days=59, hours=12))  # 12h outage, outside window
+        self._incident('down', now - timedelta(hours=2))
+        self._incident('up', now - timedelta(hours=1))  # 1h outage, inside window
+        mttr = self.service.mttr(days=30)
+        self.assertAlmostEqual(mttr.total_seconds(), timedelta(hours=1).total_seconds(), delta=1)
+
+    def test_mttr_pairs_ongoing_outage_with_now(self):
+        self._incident('down', timezone.now() - timedelta(hours=1))
+        mttr = self.service.mttr()
+        self.assertGreater(mttr.total_seconds(), timedelta(minutes=55).total_seconds())
+
+    def test_uptime_percent_none_without_incidents(self):
+        self.assertIsNone(self.service.uptime_percent())
+
+    def test_uptime_percent_reflects_downtime_ratio(self):
+        now = timezone.now()
+        self._incident('down', now - timedelta(days=10))
+        self._incident('up', now - timedelta(days=10) + timedelta(hours=24))  # 1 full day down out of 10
+        uptime = self.service.uptime_percent()
+        self.assertAlmostEqual(uptime, 90.0, delta=1)
+
+    def test_uptime_percent_ignores_degraded_by_default(self):
+        now = timezone.now()
+        self._incident('degraded', now - timedelta(days=10))
+        self._incident('up', now - timedelta(days=9))
+        self.assertEqual(self.service.uptime_percent(), 100.0)
+
+    def test_uptime_percent_includes_degraded_when_requested(self):
+        now = timezone.now()
+        self._incident('degraded', now - timedelta(days=10))
+        self._incident('up', now - timedelta(days=9))
+        uptime = self.service.uptime_percent(include_degraded=True)
+        self.assertLess(uptime, 100.0)
