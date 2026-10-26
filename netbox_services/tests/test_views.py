@@ -44,6 +44,23 @@ class ServiceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'NW-1')
 
+    def test_list_view_csv_export(self):
+        self._grant('view')
+        url = reverse('plugins:netbox_services:service_list')
+        response = self.client.get(url, {'export': 'table'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('NW-1', response.content.decode())
+
+    def test_list_view_csv_export_respects_filters(self):
+        Service.objects.create(service_id='NW-2', type='l3vpn')
+        self._grant('view')
+        url = reverse('plugins:netbox_services:service_list')
+        response = self.client.get(url, {'export': 'table', 'type': 'dia'})
+        content = response.content.decode()
+        self.assertIn('NW-1', content)
+        self.assertNotIn('NW-2', content)
+
     def test_detail_view_with_permission(self):
         self._grant('view')
         url = reverse('plugins:netbox_services:service_view', kwargs={'pk': self.service.pk})

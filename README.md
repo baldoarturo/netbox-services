@@ -56,6 +56,8 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 - Changelog, tags, and custom fields (`NetBoxModel`)
 - REST API under `/api/plugins/services/` (list/detail include `id`, lifecycle fields, and
   dependencies; query-string filtering works the same as the UI)
+- CSV export from the list view (**Export** button) and JSON export via the REST API
+  (`?format=json`), both respecting whatever filters are currently applied
 - File attachments and native image attachments
 
 ## Usage

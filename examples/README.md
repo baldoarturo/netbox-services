@@ -36,3 +36,16 @@ curl -s -X POST "$NETBOX_URL/api/plugins/services/" \
   -H "Content-Type: application/json" \
   -d '{ ... }'
 ```
+
+## Exporting what you've built
+
+Once you have services set up, pull them back out:
+
+- **CSV**, from the list view: open `/plugins/services/`, apply whatever filters you want (type, tenant, status, etc.), then use the **Export** button. The CSV only contains the filtered rows.
+- **JSON**, from the API: `GET /api/plugins/services/?format=json` — filters work exactly like the UI, e.g. `?type=dia&status=active` for just the active DIA circuits.
+
+```bash
+# All active DIA services, as JSON
+curl -s "$NETBOX_URL/api/plugins/services/?type=dia&status=active&format=json" \
+  -H "Authorization: Token $NETBOX_TOKEN"
+```

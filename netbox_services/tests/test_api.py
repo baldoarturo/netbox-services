@@ -24,6 +24,14 @@ class ServiceAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 2)
 
+    def test_list_services_as_json_export(self):
+        self.add_permissions('netbox_services.view_service')
+        url = reverse('plugins-api:netbox_services-api:service-list')
+        response = self.client.get(url, {'format': 'json'}, **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertEqual(response.data['count'], 2)
+
     def test_get_service(self):
         self.add_permissions('netbox_services.view_service')
         service = Service.objects.get(service_id='NW-1')
