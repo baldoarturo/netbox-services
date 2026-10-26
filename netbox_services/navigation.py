@@ -20,11 +20,17 @@ impact_search = PluginMenuItem(
     link_text='Impact Search',
 )
 
+contracts = PluginMenuItem(
+    auth_required=True,
+    link='plugins:netbox_services:contracts',
+    link_text='Contracts',
+)
+
 
 menu = PluginMenu(
     label='Business Services',
     groups=(
-        ('Services', (services, impact_search)),
+        ('Services', (services, impact_search, contracts)),
     ),
     icon_class='mdi mdi-receipt-text-arrow-right'
 )

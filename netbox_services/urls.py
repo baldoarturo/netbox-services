@@ -1,6 +1,7 @@
 from django.urls import path, include
 from utilities.urls import get_model_urls
 from .views import (
+    ContractsView,
     ImpactSearchView,
     ServiceAttachmentDeleteView,
     ServiceAttachmentEditView,
@@ -27,6 +28,10 @@ urlpatterns = [
     path('impact/',
          ImpactSearchView.as_view(),
          name='impact_search',
+         ),
+    path('contracts/',
+         ContractsView.as_view(),
+         name='contracts',
          ),
     path('',
          include(get_model_urls('netbox_services', 'service', detail=False))

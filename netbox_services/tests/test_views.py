@@ -44,25 +44,6 @@ class ServiceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'NW-1')
 
-    def test_list_view_shows_contract_expired_tab(self):
-        self._grant('view')
-        url = reverse('plugins:netbox_services:service_list')
-        response = self.client.get(url)
-        self.assertContains(response, 'Contract Expired')
-
-    def test_list_view_contract_expired_filter(self):
-        from datetime import date
-        Service.objects.create(
-            service_id='EXPIRED-1', type='dia', status='active',
-            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
-        )
-        self._grant('view')
-        url = reverse('plugins:netbox_services:service_list')
-        response = self.client.get(url, {'contract_expired': 'true'})
-        content = response.content.decode()
-        self.assertIn('EXPIRED-1', content)
-        self.assertNotIn('NW-1', content)
-
     def test_list_view_csv_export(self):
         self._grant('view')
         url = reverse('plugins:netbox_services:service_list')
@@ -209,3 +190,65 @@ class ServiceIncidentAddViewTestCase(TestCase):
         self.assertIsNotNone(incident.occurred_at)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, self.service.get_absolute_url())
+
+
+class ContractsViewTestCase(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        from datetime import date, timedelta
+        today = date.today()
+        Service.objects.create(
+            service_id='EXPIRED-1', type='dia', status='active',
+            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
+        )
+        Service.objects.create(
+            service_id='DECOM-EXPIRED-1', type='dia', status='decommissioned',
+            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
+        )
+        Service.objects.create(
+            service_id='EXPIRING-SOON-1', type='dia', status='active',
+            contract_start=date(2026, 1, 1), contract_end=today + timedelta(days=5),
+        )
+        Service.objects.create(
+            service_id='FAR-FUTURE-1', type='dia', status='active',
+            contract_start=date(2026, 1, 1), contract_end=today + timedelta(days=400),
+        )
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser')
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse('plugins:netbox_services:contracts'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_no_filter_shows_empty_table(self):
+        response = self.client.get(reverse('plugins:netbox_services:contracts'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn('EXPIRED-1', content)
+        self.assertNotIn('FAR-FUTURE-1', content)
+
+    def test_already_expired_excludes_decommissioned(self):
+        response = self.client.get(
+            reverse('plugins:netbox_services:contracts'), {'contract_expired': 'true'}
+        )
+        content = response.content.decode()
+        self.assertIn('EXPIRED-1', content)
+        self.assertNotIn('DECOM-EXPIRED-1', content)
+        self.assertNotIn('FAR-FUTURE-1', content)
+
+    def test_custom_date_filters_to_window(self):
+        from datetime import date, timedelta
+        cutoff = date.today() + timedelta(days=30)
+        response = self.client.get(
+            reverse('plugins:netbox_services:contracts'),
+            {'contract_end_before': cutoff.isoformat()},
+        )
+        content = response.content.decode()
+        self.assertIn('EXPIRING-SOON-1', content)
+        self.assertNotIn('FAR-FUTURE-1', content)
+        self.assertNotIn('EXPIRED-1', content)

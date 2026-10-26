@@ -1,4 +1,8 @@
+import calendar
+from datetime import timedelta
+
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.views import View
 
 from utilities.views import ConditionalLoginRequiredMixin, register_model_view
@@ -46,17 +50,8 @@ class ServiceView(ObjectView):
 class ServiceListView(ObjectListView):
     queryset = Service.objects.all()
     table = ServiceListTable
-    template_name = 'netbox_services/service_list.html'
     filterset = ServiceFilterSet
     filterset_form = ServiceFilterSetForm
-
-    def get_extra_context(self, request):
-        return {
-            'contract_expired_count': ServiceFilterSet(
-                {'contract_expired': 'true'}, Service.objects.all()
-            ).qs.count(),
-            'is_contract_expired_tab': request.GET.get('contract_expired') == 'true',
-        }
 
 @register_model_view(Service, name='add', path='add', detail=False)
 class ServiceAddView(ObjectEditView):
@@ -209,4 +204,61 @@ class ImpactSearchView(ConditionalLoginRequiredMixin, View):
             'searched_field': searched_field,
             'direct_services': direct,
             'cascaded_services': cascaded,
+        })
+
+
+#
+#   CONTRACTS
+#
+
+
+class ContractsView(ConditionalLoginRequiredMixin, View):
+    """
+    Services grouped by contract status: already expired, or expiring by a
+    chosen date (quick picks for this week/month/quarter, or an arbitrary
+    date via the picker). Lives on its own page rather than as extra
+    controls on the main service list, which doesn't need five buttons and
+    a date field cluttering its toolbar for a need this specific.
+    """
+    template_name = 'netbox_services/contracts.html'
+
+    def get(self, request):
+        today = timezone.localdate()
+
+        end_of_week = today + timedelta(days=6 - today.weekday())
+        end_of_month = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+        quarter_end_month = 3 * ((today.month - 1) // 3 + 1)
+        end_of_quarter = today.replace(
+            month=quarter_end_month,
+            day=calendar.monthrange(today.year, quarter_end_month)[1],
+        )
+
+        is_expired = request.GET.get('contract_expired') == 'true'
+        contract_end_before = request.GET.get('contract_end_before')
+
+        if is_expired:
+            queryset = ServiceFilterSet({'contract_expired': 'true'}, Service.objects.all()).qs
+        elif contract_end_before:
+            queryset = ServiceFilterSet(
+                {'contract_end_before': contract_end_before}, Service.objects.all()
+            ).qs
+        else:
+            queryset = Service.objects.none()
+
+        table = ServiceListTable(queryset)
+        table.configure(request)
+
+        return render(request, self.template_name, {
+            'table': table,
+            'contract_expired_count': ServiceFilterSet(
+                {'contract_expired': 'true'}, Service.objects.all()
+            ).qs.count(),
+            'is_expired_tab': is_expired,
+            'end_of_week': end_of_week,
+            'end_of_month': end_of_month,
+            'end_of_quarter': end_of_quarter,
+            'is_week_tab': contract_end_before == str(end_of_week),
+            'is_month_tab': contract_end_before == str(end_of_month),
+            'is_quarter_tab': contract_end_before == str(end_of_quarter),
+            'contract_end_before': contract_end_before,
         })

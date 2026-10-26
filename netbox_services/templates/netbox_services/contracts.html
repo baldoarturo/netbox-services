@@ -1,0 +1,61 @@
+{% extends 'generic/_base.html' %}
+{% load i18n %}
+{% load render_table from django_tables2 %}
+
+{% block title %}{% trans "Contracts" %}{% endblock %}
+
+{% block tabs %}
+  <ul class="nav nav-tabs">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" type="button" role="tab">
+        {% trans "Contracts" %}
+      </button>
+    </li>
+  </ul>
+{% endblock tabs %}
+
+{% block content %}
+  <div class="row">
+    <div class="col">
+      <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+        <span class="text-muted me-1">{% trans "Contract Status:" %}</span>
+        <div class="btn-group" role="group">
+          <a href="?" class="btn {% if is_expired_tab or contract_end_before %}btn-outline-primary{% else %}btn-primary{% endif %}">
+            {% trans "All Services" %}
+          </a>
+          <a href="?contract_expired=true" class="btn {% if is_expired_tab %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {% trans "Already Expired" %}
+            <span class="badge text-bg-secondary">{{ contract_expired_count }}</span>
+          </a>
+          <a href="?contract_end_before={{ end_of_week|date:'Y-m-d' }}" class="btn {% if is_week_tab %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {% trans "This Week" %}
+          </a>
+          <a href="?contract_end_before={{ end_of_month|date:'Y-m-d' }}" class="btn {% if is_month_tab %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {% trans "This Month" %}
+          </a>
+          <a href="?contract_end_before={{ end_of_quarter|date:'Y-m-d' }}" class="btn {% if is_quarter_tab %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {% trans "This Quarter" %}
+          </a>
+        </div>
+        <form method="get" class="d-inline-flex">
+          <input
+            type="date"
+            name="contract_end_before"
+            value="{{ contract_end_before|default:'' }}"
+            class="form-control"
+            aria-label="{% trans 'Contracts expiring by date' %}"
+          >
+          <button type="submit" class="btn btn-outline-primary ms-1">
+            <i class="mdi mdi-magnify" aria-hidden="true"></i>
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="table-responsive">
+          {% render_table table %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

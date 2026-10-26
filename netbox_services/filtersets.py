@@ -77,10 +77,24 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         method='filter_contract_expired',
         label='Contract expired',
     )
+    contract_end_before = django_filters.DateFilter(
+        method='filter_contract_end_before',
+        label='Contract expiring by (date)',
+    )
 
     def filter_contract_expired(self, queryset, name, value):
         expired = Q(contract_end__lt=timezone.localdate()) & ~Q(status='decommissioned')
         return queryset.filter(expired) if value else queryset.exclude(expired)
+
+    def filter_contract_end_before(self, queryset, name, value):
+        # Services whose contract ends between today and the given date
+        # (inclusive), i.e. "expiring soon" rather than already expired.
+        # Already-decommissioned services aren't an upcoming concern.
+        today = timezone.localdate()
+        return queryset.filter(
+            contract_end__gte=today,
+            contract_end__lte=value,
+        ).exclude(status='decommissioned')
 
     class Meta:
         model = Service

@@ -187,3 +187,48 @@ class ServiceContractExpiredFilterSetTestCase(TestCase):
         results = self.filterset({'contract_expired': 'false'}, self.queryset).qs
         ids = set(results.values_list('service_id', flat=True))
         self.assertEqual(ids, {'DECOM-EXPIRED-1', 'CURRENT-1', 'NO-CONTRACT-1'})
+
+
+class ServiceContractEndBeforeFilterSetTestCase(TestCase):
+    queryset = Service.objects.all()
+    filterset = ServiceFilterSet
+
+    @classmethod
+    def setUpTestData(cls):
+        from datetime import timedelta
+        today = date.today()
+        Service.objects.create(
+            service_id='PAST-1', type='dia', status='active',
+            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
+        )
+        Service.objects.create(
+            service_id='SOON-1', type='dia', status='active',
+            contract_start=date(2026, 1, 1), contract_end=today + timedelta(days=5),
+        )
+        Service.objects.create(
+            service_id='LATER-1', type='dia', status='active',
+            contract_start=date(2026, 1, 1), contract_end=today + timedelta(days=400),
+        )
+        Service.objects.create(
+            service_id='DECOM-SOON-1', type='dia', status='decommissioned',
+            contract_start=date(2026, 1, 1), contract_end=today + timedelta(days=5),
+        )
+
+    def test_excludes_already_expired(self):
+        from datetime import timedelta
+        cutoff = date.today() + timedelta(days=30)
+        results = self.filterset({'contract_end_before': cutoff.isoformat()}, self.queryset).qs
+        ids = set(results.values_list('service_id', flat=True))
+        self.assertEqual(ids, {'SOON-1'})
+
+    def test_excludes_decommissioned(self):
+        from datetime import timedelta
+        cutoff = date.today() + timedelta(days=30)
+        results = self.filterset({'contract_end_before': cutoff.isoformat()}, self.queryset).qs
+        self.assertNotIn('DECOM-SOON-1', results.values_list('service_id', flat=True))
+
+    def test_excludes_beyond_cutoff(self):
+        from datetime import timedelta
+        cutoff = date.today() + timedelta(days=30)
+        results = self.filterset({'contract_end_before': cutoff.isoformat()}, self.queryset).qs
+        self.assertNotIn('LATER-1', results.values_list('service_id', flat=True))
