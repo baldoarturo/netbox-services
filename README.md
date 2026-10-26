@@ -66,6 +66,8 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 4. Fill in lifecycle dates as the order, install, or disconnect actually happen.
 5. Drop contracts/PDFs under **Attachments**; photos go on the **Images** tab.
 
+See [examples/](examples/) for a worked tutorial per service type (L2VPN, L3VPN, DIA, IP Transit, CDN, Voice), each with the API payload to create it and the UI steps to attach its inventory.
+
 ![Plugin screenshot](https://github.com/baldoarturo/netbox-services/raw/master/02-main.png)
 
 ## Requirements

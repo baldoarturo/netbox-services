@@ -1,0 +1,38 @@
+# Service Examples
+
+A tutorial per service type, showing how to create and fully set up a `Service` end to end: the API call that creates it, and the UI steps to attach the technical inventory that actually delivers it.
+
+- [L2VPN](l2vpn.md) — a point-to-point L2L circuit between two sites
+- [L3VPN](l3vpn.md) — a routed VPN over MPLS
+- [DIA](dia.md) — dedicated internet access for a single customer site
+- [IP Transit](transit.md) — wholesale internet transit for a downstream ISP
+- [CDN](cdn.md) — a CDN edge node riding over an existing circuit
+- [Voice](voice.md) — a hosted voice trunk
+
+## Why two steps (API, then UI)?
+
+`POST /api/plugins/services/` creates the `Service` and sets its business fields (`service_id`, `type`, `tenant`, dates, bandwidth, SLA, etc.). The technical inventory fields — `devices`, `interfaces`, `cables`, `vlans`, `prefixes`, `ip_addresses`, `vrfs`, `asns`, `route_targets`, `l2vpns`, `tunnels`, `virtual_machines` — are **read-only in the API**. Posting them is silently ignored; they always come back empty on a freshly created service.
+
+That's by design: assigning a device or interface to a service is a decision you want made deliberately, one object at a time, from the service's own "Assign" buttons — not something a bulk API payload should casually overwrite. So every example below is two parts:
+
+1. Create the service via the API (or the **Add** button in the UI — same form either way).
+2. Attach inventory from the service's detail page, using **Assign** on each relevant card.
+
+## Prerequisites
+
+- A NetBox API token with `add_service` permission (`Admin > API Tokens` or `/user/api-tokens/`).
+- The IDs referenced below (device PKs, prefix PKs, etc.) are examples — substitute the actual PKs from your own NetBox instance. You can find them from each object's detail page URL, or by browsing `/api/dcim/devices/`, `/api/ipam/prefixes/`, etc.
+
+```bash
+export NETBOX_URL="https://netbox.example.com"
+export NETBOX_TOKEN="<your-api-token>"
+```
+
+Every example uses this pattern:
+
+```bash
+curl -s -X POST "$NETBOX_URL/api/plugins/services/" \
+  -H "Authorization: Token $NETBOX_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
