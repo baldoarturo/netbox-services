@@ -46,6 +46,9 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 - Incident history per service: an external NMS can `POST` a down/degraded/up/other event by
   `service_id`, and NetBox stamps the time it received it rather than trusting a caller-supplied
   timestamp. Incidents can also be logged by hand from the service detail page
+- MTTR and uptime %, derived from that incident history and shown against the service's own
+  `sla_uptime_percent` (Meeting SLA / Below SLA). Excludes `degraded` events by default — only a
+  full `down` counts against SLA — but that's a toggle (`?include_degraded=1`), not a fixed rule
 - Filter and search by service ID, description, tenant, status, dates, dependencies, bandwidth/CIR
   range, SLA uptime, decommission reason, and incident event type/severity
 - **Impact Search**: pick a device, interface, cable, VLAN, prefix, IP address, VRF, ASN, route
