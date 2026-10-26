@@ -51,8 +51,8 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
   full `down` counts against SLA — but that's a toggle (`?include_degraded=1`), not a fixed rule
 - Filter and search by service ID, description, tenant, status, dates, dependencies, bandwidth/CIR
   range, SLA uptime, decommission reason, and incident event type/severity
-- A **Contract Expired** tab on the list view: services past `contract_end` that haven't been
-  formally decommissioned, one click away from the full list
+- A **Contracts** page: already-expired contracts, plus quick picks for what's expiring this
+  week/month/quarter or by an arbitrary date, all excluding services already decommissioned
 - **Impact Search**: pick a device, interface, cable, VLAN, prefix, IP address, VRF, ASN, route
   target, L2VPN, tunnel, or VM, and see every service that would be affected if it were
   removed — both the services that reference it directly and, through `depends_on`, the services
