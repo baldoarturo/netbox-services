@@ -46,9 +46,17 @@ class ServiceView(ObjectView):
 class ServiceListView(ObjectListView):
     queryset = Service.objects.all()
     table = ServiceListTable
-    template_name = 'generic/object_list.html'
+    template_name = 'netbox_services/service_list.html'
     filterset = ServiceFilterSet
     filterset_form = ServiceFilterSetForm
+
+    def get_extra_context(self, request):
+        return {
+            'contract_expired_count': ServiceFilterSet(
+                {'contract_expired': 'true'}, Service.objects.all()
+            ).qs.count(),
+            'is_contract_expired_tab': request.GET.get('contract_expired') == 'true',
+        }
 
 @register_model_view(Service, name='add', path='add', detail=False)
 class ServiceAddView(ObjectEditView):

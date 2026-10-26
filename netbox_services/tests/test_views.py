@@ -44,6 +44,25 @@ class ServiceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'NW-1')
 
+    def test_list_view_shows_contract_expired_tab(self):
+        self._grant('view')
+        url = reverse('plugins:netbox_services:service_list')
+        response = self.client.get(url)
+        self.assertContains(response, 'Contract Expired')
+
+    def test_list_view_contract_expired_filter(self):
+        from datetime import date
+        Service.objects.create(
+            service_id='EXPIRED-1', type='dia', status='active',
+            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
+        )
+        self._grant('view')
+        url = reverse('plugins:netbox_services:service_list')
+        response = self.client.get(url, {'contract_expired': 'true'})
+        content = response.content.decode()
+        self.assertIn('EXPIRED-1', content)
+        self.assertNotIn('NW-1', content)
+
     def test_list_view_csv_export(self):
         self._grant('view')
         url = reverse('plugins:netbox_services:service_list')

@@ -1,5 +1,6 @@
 import django_filters
 from django.db.models import Q
+from django.utils import timezone
 
 from netbox.filtersets import ChangeLoggedModelFilterSet, NetBoxModelFilterSet
 from tenancy.models import Tenant
@@ -72,6 +73,14 @@ class ServiceFilterSet(NetBoxModelFilterSet):
         queryset=Service.objects.all(),
         label='Dependent (ID)',
     )
+    contract_expired = django_filters.BooleanFilter(
+        method='filter_contract_expired',
+        label='Contract expired',
+    )
+
+    def filter_contract_expired(self, queryset, name, value):
+        expired = Q(contract_end__lt=timezone.localdate()) & ~Q(status='decommissioned')
+        return queryset.filter(expired) if value else queryset.exclude(expired)
 
     class Meta:
         model = Service

@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.test import TestCase
 
 from tenancy.models import Tenant
@@ -155,3 +157,33 @@ class ServiceIncidentFilterSetTestCase(TestCase):
     def test_search_matches_source(self):
         results = self.filterset({'q': 'Zabbix'}, self.queryset).qs
         self.assertEqual(results.count(), 1)
+
+
+class ServiceContractExpiredFilterSetTestCase(TestCase):
+    queryset = Service.objects.all()
+    filterset = ServiceFilterSet
+
+    @classmethod
+    def setUpTestData(cls):
+        Service.objects.create(
+            service_id='EXPIRED-1', type='dia', status='active',
+            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
+        )
+        Service.objects.create(
+            service_id='DECOM-EXPIRED-1', type='dia', status='decommissioned',
+            contract_start=date(2024, 1, 1), contract_end=date(2025, 1, 1),
+        )
+        Service.objects.create(
+            service_id='CURRENT-1', type='dia', status='active',
+            contract_start=date(2026, 1, 1), contract_end=date(2027, 1, 1),
+        )
+        Service.objects.create(service_id='NO-CONTRACT-1', type='dia', status='active')
+
+    def test_contract_expired_true_excludes_decommissioned(self):
+        results = self.filterset({'contract_expired': 'true'}, self.queryset).qs
+        self.assertEqual(list(results.values_list('service_id', flat=True)), ['EXPIRED-1'])
+
+    def test_contract_expired_false_includes_everything_else(self):
+        results = self.filterset({'contract_expired': 'false'}, self.queryset).qs
+        ids = set(results.values_list('service_id', flat=True))
+        self.assertEqual(ids, {'DECOM-EXPIRED-1', 'CURRENT-1', 'NO-CONTRACT-1'})
