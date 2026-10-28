@@ -1,0 +1,86 @@
+# Runs the plugin's test suite against a real NetBox checkout + Postgres +
+# Redis. Used both as normal CI (every push/PR) and as a release gate: the
+# publish workflow calls this one and only proceeds to PyPI if it passes.
+
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call:
+
+env:
+  NETBOX_VERSION: v4.7.3
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: netbox
+          POSTGRES_PASSWORD: netbox
+          POSTGRES_DB: netbox
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out plugin
+        uses: actions/checkout@v4
+        with:
+          path: netbox-services
+
+      - name: Check out NetBox ${{ env.NETBOX_VERSION }}
+        uses: actions/checkout@v4
+        with:
+          repository: netbox-community/netbox
+          ref: ${{ env.NETBOX_VERSION }}
+          path: netbox
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install NetBox requirements
+        run: pip install -r requirements.txt
+        working-directory: netbox
+
+      - name: Install plugin
+        run: pip install ./netbox-services
+
+      - name: Add plugin to test configuration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('netbox/netbox/netbox/configuration_testing.py')
+          text = path.read_text()
+          text = text.replace(
+              "PLUGINS = [\n",
+              "PLUGINS = [\n    'netbox_services',\n",
+              1,
+          )
+          path.write_text(text)
+          PY
+
+      - name: Run plugin test suite
+        env:
+          NETBOX_CONFIGURATION: netbox.configuration_testing
+        run: python manage.py test netbox_services
+        working-directory: netbox/netbox
