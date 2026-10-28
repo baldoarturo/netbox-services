@@ -2,9 +2,9 @@
 
 ## Dev server (hard rule)
 
-- Keep the Django dev server running on port 8000 for the duration of the work: `cd netbox/ && python manage.py runserver 0.0.0.0:8000` (venv active, `NETBOX_CONFIGURATION` set).
+- Keep the dev server running on port 8000 for the duration of the work: `dev/run.sh` (from the repo root). It sets up everything from scratch on a fresh clone and is safe to re-run (each step is skipped once done).
 - If nothing is listening on port 8000, start it in the background and leave it running.
-- Do not stop, kill, or restart an already-running server on 8000 unless the user asks.
+- Do not stop, kill, or restart an already-running server on 8000 unless the user asks. Use `dev/run.sh --reset` only when asked to rebuild the dev database.
 
 ## Verify after every change (hard rule)
 
@@ -31,18 +31,16 @@
 
 ## NetBox core repo (hard rule)
 
-- Never commit anything to the NetBox core repo (the parent `netbox/` checkout one level up from this plugin). It always tracks upstream `netbox-community/netbox` as-is — no local commits, ever.
-- Local-only dev tooling for the core repo (`setup-dev.sh`, `compose.yml`, `scripts/*_database.sh`, `netbox/netbox/configuration.py`, `netbox/netbox/configuration_testing.py`) lives there but is gitignored/untracked on purpose. Edit it freely to make the dev environment work, but never try to commit it.
-- If `manage.py test netbox_services` needs `netbox_services` added to `configuration_testing.py`'s `PLUGINS`, patch that file locally (or have `setup-dev.sh` do it) — don't ask the user to do it, and don't commit it.
+- Never commit anything to the NetBox core repo. This plugin no longer depends on one living at a fixed relative path — `dev/run.sh` clones its own disposable NetBox checkout into `.netbox/` (gitignored) and is self-contained.
 
-## Dev environment setup (`setup-dev.sh`, one level up from this plugin)
+## Dev environment setup (`dev/`, standardized across plugins — see `dev/README.md`)
 
-- Must stay idempotent: safe to re-run with containers/venv already up, must tear down and recreate the test DB on every demo-data load (don't assume a clean DB).
-- Must support bringing up the environment at an arbitrary NetBox version via `--netbox-version <tag>` (does a `git fetch --tags` + `git checkout` in the core repo) and an arbitrary demo-data version via `--demo-version <version>`. This is so any dev can reproduce an environment against any NetBox release, not just whatever is currently checked out.
-- Database and Redis run in podman containers (`compose.yml`, one level up); NetBox itself runs natively in a venv on the host — the user explicitly rejected running NetBox itself in a container. Don't reintroduce a NetBox container.
-- Postgres container password and `configuration.py`/`configuration_testing.py` DB credentials must stay in sync (`netbox`/`netbox`) — a mismatch here is a common source of "it works for dev but tests can't connect" bugs.
-- Different NetBox versions can require different minimum Python versions (check `requires-python` in the checked-out `pyproject.toml`); the script must pick/recreate the venv's Python version accordingly instead of assuming whatever `python3` resolves to on the host.
+- `dev/run.sh` — sets up and runs NetBox with this plugin against its own database (`netbox_services_dev`), from a fresh clone. Idempotent: safe to re-run, each step skipped once done.
+- `dev/test.sh` — runs the plugin's tests fast, against a migrated-schema template database built once from `origin/master`.
+- The only plugin-specific file is `dev/plugin.conf` (`PLUGIN_MODULE`, `PLUGIN_DEV_DB`, `NETBOX_REF` — kept in sync with `NETBOX_VERSION` in `.github/workflows/test.yml`, currently `v4.7.3`). The rest of `dev/` is generic and shared verbatim with other plugins in this workspace (e.g. `netbox-routing`) — don't fork plugin-specific logic into `lib.sh`/`run.sh`/`test.sh`; it belongs in `plugin.conf` or stays generic.
+- NetBox itself runs natively in a venv (`.netbox/venv`, created by `dev/run.sh`); only Postgres/Redis run in podman containers (`dev/compose.yml`). Don't reintroduce a NetBox container.
+- `dev/run.sh --netbox DIR` points at an existing NetBox checkout instead of the default `.netbox/`; `--reset` rebuilds just the dev database; `--no-demo` skips seeding from NetBox demo data.
 
-## Git/push workflow (hard rule)
+## Git/push workflow
 
-- Claude's shell in this environment has no GitHub credentials — `git push` here always fails with "could not read Username for 'https://github.com'". Never spend time trying to find or configure credentials for this; just commit locally and tell the user the exact `git push` command to run themselves.
+- This sandbox has a working SSH key for GitHub. If a remote is set to HTTPS and `git push` fails with "could not read Username for 'https://github.com'", switch it to SSH first (`git remote set-url <remote> git@github.com:<owner>/<repo>.git`) rather than handing the push off to the user.

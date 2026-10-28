@@ -73,5 +73,8 @@ local_settings.py
 .DS_Store
 Thumbs.db
 
+# dev/run.sh and dev/test.sh clone/build a NetBox checkout here by default
+/.netbox/
+
 # Keep only code
 !*.py
