@@ -7,6 +7,8 @@ from rest_framework import status
 
 from utilities.testing import APITestCase
 
+from dcim.models import Device, DeviceRole, DeviceType, Interface, Manufacturer, Site
+
 from netbox_services.models import Service, ServiceIncident
 
 
@@ -123,6 +125,92 @@ class ServiceDependencyAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(response.data['results'][0]['service_id'], 'L3VPN-1')
+
+    def test_patch_depends_on_assigns_dependency(self):
+        """PATCHing depends_on assigns the dependency, instead of being silently ignored."""
+        unrelated = Service.objects.create(service_id='CDN-1', type='cdn')
+        self.add_permissions('netbox_services.change_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': unrelated.pk})
+        response = self.client.patch(url, {'depends_on': [self.dia.pk]}, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list(unrelated.depends_on.all()), [self.dia])
+
+    def test_patch_depends_on_rejects_cycle(self):
+        """PATCHing depends_on with a cycle-forming PK is rejected with 400, same as the UI form."""
+        self.add_permissions('netbox_services.change_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.dia.pk})
+        response = self.client.patch(url, {'depends_on': [self.l3vpn.pk]}, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_service_with_depends_on_in_payload(self):
+        """depends_on can be set directly in the creating POST, not just a later PATCH."""
+        self.add_permissions('netbox_services.add_service')
+        url = reverse('plugins-api:netbox_services-api:service-list')
+        data = {'type': 'cdn', 'service_id': 'CDN-2', 'depends_on': [self.dia.pk]}
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created = Service.objects.get(service_id='CDN-2')
+        self.assertEqual(list(created.depends_on.all()), [self.dia])
+
+
+class ServiceTechnicalInventoryAPITestCase(APITestCase):
+    model = Service
+
+    @classmethod
+    def setUpTestData(cls):
+        """Create a service and a device/interface to attach to it via the API."""
+        cls.service = Service.objects.create(service_id='DIA-1', type='dia')
+        manufacturer = Manufacturer.objects.create(name='Acme', slug='acme')
+        device_type = DeviceType.objects.create(manufacturer=manufacturer, model='Router', slug='router')
+        role = DeviceRole.objects.create(name='Router', slug='router')
+        site = Site.objects.create(name='Site 1', slug='site-1')
+        cls.device = Device.objects.create(name='router-1', site=site, device_type=device_type, role=role)
+        cls.interface = Interface.objects.create(device=cls.device, name='eth0', type='1000base-t')
+
+    def test_patch_devices_assigns_device(self):
+        """PATCHing devices assigns the device, instead of being silently ignored."""
+        self.add_permissions('netbox_services.change_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.service.pk})
+        response = self.client.patch(url, {'devices': [self.device.pk]}, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list(self.service.devices.all()), [self.device])
+
+    def test_patch_interfaces_assigns_interface(self):
+        """PATCHing interfaces assigns the interface, instead of being silently ignored."""
+        self.add_permissions('netbox_services.change_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.service.pk})
+        response = self.client.patch(url, {'interfaces': [self.interface.pk]}, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list(self.service.interfaces.all()), [self.interface])
+
+    def test_create_service_with_devices_in_payload(self):
+        """devices can be set directly in the creating POST, not just a later PATCH."""
+        self.add_permissions('netbox_services.add_service')
+        url = reverse('plugins-api:netbox_services-api:service-list')
+        data = {'type': 'dia', 'service_id': 'DIA-2', 'devices': [self.device.pk]}
+        response = self.client.post(url, data, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created = Service.objects.get(service_id='DIA-2')
+        self.assertEqual(list(created.devices.all()), [self.device])
+
+    def test_patch_devices_clears_assignment_with_empty_list(self):
+        """PATCHing devices with an empty list clears the assignment, as a writable M2M allows."""
+        self.service.devices.add(self.device)
+        self.add_permissions('netbox_services.change_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.service.pk})
+        response = self.client.patch(url, {'devices': []}, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list(self.service.devices.all()), [])
+
+    def test_dependents_remains_read_only(self):
+        """dependents is a reverse relation and stays read-only even though depends_on is writable."""
+        other = Service.objects.create(service_id='L3VPN-1', type='l3vpn')
+        other.depends_on.add(self.service)
+        self.add_permissions('netbox_services.change_service')
+        url = reverse('plugins-api:netbox_services-api:service-detail', kwargs={'pk': self.service.pk})
+        response = self.client.patch(url, {'dependents': []}, format='json', **self.header)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list(self.service.dependents.all()), [other])
 
 
 class ServiceCapacityAPITestCase(APITestCase):

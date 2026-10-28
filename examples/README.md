@@ -9,14 +9,21 @@ A tutorial per service type, showing how to create and fully set up a `Service` 
 - [CDN](cdn.md) — a CDN edge node riding over an existing circuit
 - [Voice](voice.md) — a hosted voice trunk
 
-## Why two steps (API, then UI)?
+## Create-then-attach, or one shot?
 
-`POST /api/plugins/services/` creates the `Service` and sets its business fields (`service_id`, `type`, `tenant`, dates, bandwidth, SLA, etc.). The technical inventory fields — `devices`, `interfaces`, `cables`, `vlans`, `prefixes`, `ip_addresses`, `vrfs`, `asns`, `route_targets`, `l2vpns`, `tunnels`, `virtual_machines` — are **read-only in the API**. Posting them is silently ignored; they always come back empty on a freshly created service.
+`POST /api/plugins/services/` creates the `Service` and sets its business fields (`service_id`, `type`, `tenant`, dates, bandwidth, SLA, etc.). The technical inventory fields — `devices`, `interfaces`, `cables`, `vlans`, `prefixes`, `ip_addresses`, `vrfs`, `asns`, `route_targets`, `l2vpns`, `tunnels`, `virtual_machines`, `depends_on` — are writable too, either in that same payload or on a later `PATCH`.
 
-That's by design: assigning a device or interface to a service is a decision you want made deliberately, one object at a time, from the service's own "Assign" buttons — not something a bulk API payload should casually overwrite. So every example below is two parts:
+Every example below still shows the two-step flow (create, then attach), since that's the clearer way to read a tutorial and matches the UI's own "Assign" buttons per card. But if you already know the PKs up front, you can pass them directly in the `POST` body and skip the follow-up step entirely:
+
+```bash
+curl -s -X POST "$NETBOX_URL/api/plugins/services/" \
+  -H "Authorization: Token $NETBOX_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "type": "dia", "service_id": "DIA-100", "devices": [12], "interfaces": [34] }'
+```
 
 1. Create the service via the API (or the **Add** button in the UI — same form either way).
-2. Attach inventory from the service's detail page, using **Assign** on each relevant card.
+2. Attach inventory either in that same call, a follow-up `PATCH`, or from the service's detail page using **Assign** on each relevant card.
 
 ## Prerequisites
 

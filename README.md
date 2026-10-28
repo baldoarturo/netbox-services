@@ -60,7 +60,10 @@ The detail page is laid out for that: technical inventory on the left, lifecycle
 - Bulk delete from the list view
 - Changelog, tags, and custom fields (`NetBoxModel`)
 - REST API under `/api/plugins/services/` (list/detail include `id`, lifecycle fields, and
-  dependencies; query-string filtering works the same as the UI)
+  dependencies; query-string filtering works the same as the UI). Technical inventory fields
+  (devices, interfaces, cables, VLANs, prefixes, IP addresses, VRFs, ASNs, route targets, L2VPNs,
+  tunnels, VMs) and `depends_on` are writable via the API as well as the UI's **Assign** buttons —
+  set them in the creating `POST` or a later `PATCH`
 - CSV export from the list view (**Export** button) and JSON export via the REST API
   (`?format=json`), both respecting whatever filters are currently applied
 - File attachments and native image attachments

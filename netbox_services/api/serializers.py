@@ -1,4 +1,8 @@
+from dcim.models import Cable, Device, Interface
+from ipam.models import ASN, VRF, IPAddress, Prefix, RouteTarget, VLAN
 from rest_framework import serializers
+from virtualization.models import VirtualMachine
+from vpn.models import L2VPN, Tunnel
 
 from netbox.api.serializers import NetBoxModelSerializer
 from netbox.api.serializers.base import ValidatedModelSerializer
@@ -9,19 +13,23 @@ class ServiceSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='plugins-api:netbox_services-api:service-detail'
     )
-    devices = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    interfaces = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    cables = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    vlans = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    prefixes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    ip_addresses = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    vrfs = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    asns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    route_targets = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    l2vpns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    tunnels = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    virtual_machines = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    depends_on = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    devices = serializers.PrimaryKeyRelatedField(many=True, queryset=Device.objects.all(), required=False)
+    interfaces = serializers.PrimaryKeyRelatedField(many=True, queryset=Interface.objects.all(), required=False)
+    cables = serializers.PrimaryKeyRelatedField(many=True, queryset=Cable.objects.all(), required=False)
+    vlans = serializers.PrimaryKeyRelatedField(many=True, queryset=VLAN.objects.all(), required=False)
+    prefixes = serializers.PrimaryKeyRelatedField(many=True, queryset=Prefix.objects.all(), required=False)
+    ip_addresses = serializers.PrimaryKeyRelatedField(many=True, queryset=IPAddress.objects.all(), required=False)
+    vrfs = serializers.PrimaryKeyRelatedField(many=True, queryset=VRF.objects.all(), required=False)
+    asns = serializers.PrimaryKeyRelatedField(many=True, queryset=ASN.objects.all(), required=False)
+    route_targets = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=RouteTarget.objects.all(), required=False
+    )
+    l2vpns = serializers.PrimaryKeyRelatedField(many=True, queryset=L2VPN.objects.all(), required=False)
+    tunnels = serializers.PrimaryKeyRelatedField(many=True, queryset=Tunnel.objects.all(), required=False)
+    virtual_machines = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=VirtualMachine.objects.all(), required=False
+    )
+    depends_on = serializers.PrimaryKeyRelatedField(many=True, queryset=Service.objects.all(), required=False)
     dependents = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     mttr_seconds = serializers.SerializerMethodField()
     uptime_percent = serializers.SerializerMethodField()

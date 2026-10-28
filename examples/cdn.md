@@ -41,8 +41,11 @@ This is the step that matters most for a CDN service: without it, deleting or di
 On `/plugins/services/46/`, find the **Dependencies** card → **Assign** next to "Depends on" → select `L2L-10042` (service PK `42`).
 
 ```bash
-# Equivalent isn't exposed via the API — depends_on is read-only there too,
-# just like the other relation fields. Use the UI "Assign" button.
+# Equivalent via the API:
+curl -s -X PATCH "$NETBOX_URL/api/plugins/services/46/" \
+  -H "Authorization: Token $NETBOX_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "depends_on": [42] }'
 ```
 
 ## Result
