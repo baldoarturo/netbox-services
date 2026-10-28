@@ -62,7 +62,7 @@ jobs:
         working-directory: netbox
 
       - name: Install plugin
-        run: pip install ./netbox-services
+        run: pip install -e ./netbox-services
 
       - name: Add plugin to test configuration
         run: |
