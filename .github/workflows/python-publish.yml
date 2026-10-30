@@ -3,7 +3,9 @@
 # to cut a release - nothing publishes automatically on ordinary pushes.
 # The test suite (test.yml) must pass against a real NetBox checkout before
 # the tag is allowed to publish - see the `test` job below. Once published,
-# the `release` job creates the matching GitHub Release with generated notes.
+# the `release` job creates the matching GitHub Release with generated notes
+# and the `blog` job posts those notes to WordPress (secrets WP_URL, WP_USER,
+# WP_APP_PASSWORD).
 
 name: Upload Python Package
 
@@ -78,3 +80,40 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+
+  blog:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Publish the release notes to WordPress
+      env:
+        GH_TOKEN: ${{ github.token }}
+        WP_URL: ${{ secrets.WP_URL }}
+        WP_USER: ${{ secrets.WP_USER }}
+        WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+      run: |
+        pip install --quiet markdown
+        gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body,url > release.json
+        python - <<'PY'
+        import json
+        import os
+        import markdown
+
+        release = json.load(open('release.json'))
+        content = markdown.markdown(release['body'])
+        content += f'<p><a href="{release["url"]}">View the release on GitHub</a></p>'
+        payload = {
+            'title': f'netbox-services {os.environ["GITHUB_REF_NAME"]} released',
+            'content': content,
+            'status': 'publish',
+        }
+        json.dump(payload, open('post.json', 'w'))
+        PY
+        curl --fail-with-body --silent --show-error \
+          --user "$WP_USER:$WP_APP_PASSWORD" \
+          --header 'Content-Type: application/json' \
+          --data @post.json \
+          "${WP_URL%/}/wp-json/wp/v2/posts" | python -c 'import json,sys; print("Published:", json.load(sys.stdin)["link"])'
