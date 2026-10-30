@@ -2,7 +2,8 @@
 # version in pyproject.toml yourself, commit it, then push a matching tag
 # to cut a release - nothing publishes automatically on ordinary pushes.
 # The test suite (test.yml) must pass against a real NetBox checkout before
-# the tag is allowed to publish - see the `test` job below.
+# the tag is allowed to publish - see the `test` job below. Once published,
+# the `release` job creates the matching GitHub Release with generated notes.
 
 name: Upload Python Package
 
@@ -63,3 +64,17 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+
+  release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
